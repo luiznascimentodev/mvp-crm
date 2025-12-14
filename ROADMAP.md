@@ -81,11 +81,11 @@
     - Performance de queries lentas (threshold: >500ms).
     - Nota: Logs de autenticação e contexto de usuário serão adicionados no Milestone 1.
 - [x] 💾 **COMMIT:** `feat: implement structured logging with pino`
-- [ ] **0.6 Hello World TDD**
+- [x] **0.6 Hello World TDD**
   - Configurar **Vitest** no NestJS.
   - Teste do `AppController` (Health Check).
-- [ ] 💾 **COMMIT:** `test: configure vitest and add health check test`
-- [ ] 🏷️ **TAG:** `git tag -a v0.1.0 -m "Milestone 0: NestJS Foundation"`
+- [x] 💾 **COMMIT:** `test: configure vitest and add health check test`
+- [x] 🏷️ **TAG:** `git tag -a v0.1.0 -m "Milestone 0: NestJS Foundation"`
 
 ---
 
@@ -258,3 +258,5 @@
   - Endpoint `/health` retornando status do Redis e DB.
 - [ ] 💾 **COMMIT:** `ci: setup github actions pipeline`
 - [ ] 🏷️ **TAG:** `git tag -a v1.0.0 -m "Release 1.0: Enterprise Gold"`
+
+pode ser interessante uma feature onde o usuario clica e envia um feliz aniversario direto para o cliente, e tambem pode ser interessante no futuro ter um botao de enviar um mimo via dropshiping
