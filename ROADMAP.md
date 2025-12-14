@@ -105,10 +105,90 @@
   - Migration Dev: `npx prisma migrate dev --name init-crm-schema`
   - **Aplicar Check Constraint SQL:** Constraint polimórfico em Activity garantindo que `lead_id`, `contact_id` ou `deal_id` seja NOT NULL
 - [x] 💾 **COMMIT:** `feat: add crm multi-tenant prisma schema with constraints`
-- [ ] **1.3 TDD: Auth Service (Lógica)**
-  - `AuthService`: Register com Argon2.
-  - `JwtStrategy`: Passport JWT.
-- [ ] 💾 **COMMIT:** `feat: implement secure auth logic with argon2`
+- [x] **1.3 TDD: Auth Service (Lógica)**
+  - [x] **1.3.1 Instalação de Dependências**
+    - Instalar `@nestjs/passport`, `passport`, `@nestjs/jwt`, `passport-jwt`, `argon2` via workspace
+    - Instalar `class-validator`, `class-transformer` para validação de DTOs
+    - Verificar instalação correta no monorepo (sem duplicação de node_modules)
+  - [x] **1.3.2 Configuração de Variáveis de Ambiente**
+    - Adicionar `JWT_SECRET` (64 caracteres) e `JWT_EXPIRES_IN` no `.env`
+    - Criar validação Zod em `env.validation.ts`:
+      - `JWT_SECRET`: mínimo 32 caracteres
+      - `JWT_EXPIRES_IN`: formato `\d+[smhd]` (ex: 1h, 15m, 7d)
+  - [x] **1.3.3 Estrutura do Módulo Auth**
+    - Criar pasta `server/src/auth/`
+    - Criar `auth.module.ts` (estrutura básica)
+    - Criar `auth.service.ts` (classe vazia com `@Injectable`)
+    - Criar `auth.controller.ts` (classe vazia com `@Controller('auth')`)
+    - Registrar `AuthModule` no `AppModule`
+  - [x] **1.3.4 DTOs de Validação**
+    - Criar pasta `server/src/auth/dto/`
+    - Criar `register.dto.ts`:
+      - Validar email (`@IsEmail`)
+      - Validar senha (mínimo 8 caracteres, máximo 100)
+      - Validar nome (mínimo 2 caracteres, máximo 100)
+      - Validar tenantId
+    - Criar `login.dto.ts`:
+      - Validar email
+      - Validar senha (mínimo 1 caractere)
+    - Habilitar `ValidationPipe` global no `main.ts` (whitelist, forbidNonWhitelisted, transform)
+  - [x] **1.3.5 PrismaService (Módulo Global)**
+    - Criar `server/src/prisma/prisma.service.ts`:
+      - Estender `PrismaClient`
+      - Implementar lifecycle hooks (`OnModuleInit`, `OnModuleDestroy`)
+      - Conectar/desconectar automaticamente
+    - Criar `server/src/prisma/prisma.module.ts`:
+      - Marcar como `@Global()` (disponível em todos os módulos)
+      - Exportar `PrismaService`
+    - Registrar `PrismaModule` no `AppModule`
+    - Corrigir import do Prisma Client para `@prisma/client` (padrão)
+  - [x] **1.3.6 TDD: Testes do AuthService**
+    - Criar `auth.service.spec.ts` (ao lado do serviço, padrão NestJS)
+    - Configurar imports explícitos do Vitest (`describe`, `it`, `expect`, `vi`)
+    - Mockar `PrismaService` com `vi.fn()`
+    - Teste RED: "should hash password with argon2 and create user"
+    - Teste RED: "should throw ConflictException if email already exists"
+  - [x] **1.3.7 Implementação do AuthService.register()**
+    - Injetar `PrismaService` via DI
+    - Verificar email duplicado (`findUnique` com chave composta `tenantId_email`)
+    - Lançar `ConflictException` se usuário já existe
+    - Hash de senha com `argon2.hash()`
+    - Criar usuário no banco com role `MEMBER`
+    - Retornar usuário SEM `passwordHash` (usar `select` para excluir)
+  - [x] **1.3.8 Testes GREEN**
+    - Corrigir mock do Prisma para respeitar `select` (não retornar campos extras)
+    - Validar que `passwordHash` não é exposto na resposta
+    - Todos os testes passando (2/2)
+- [x] 💾 **COMMIT:** `feat: implement auth service with argon2 and tdd`
+- [ ] **1.4 Auth Controller & Endpoints HTTP**
+  - [ ] **1.4.1 Implementar Endpoint de Registro**
+    - Adicionar método `@Post('register')` no `AuthController`
+    - Injetar `AuthService` via DI
+    - Retornar HTTP 201 (Created) com dados do usuário
+    - Validação automática via `RegisterDto`
+  - [ ] **1.4.2 Teste E2E do Endpoint**
+    - Criar teste de integração (request HTTP real)
+    - Testar fluxo completo: validação → serviço → banco
+    - Validar resposta 201 e 409 (conflito)
+  - [ ] **1.4.3 Implementar Login e JWT**
+    - Criar `AuthService.login()`:
+      - Buscar usuário por email
+      - Verificar senha com `argon2.verify()`
+      - Gerar JWT com `JwtService.sign()`
+      - Retornar `{ access_token }`
+    - Criar endpoint `@Post('login')` no controller
+    - Testes TDD para login (credenciais válidas/inválidas)
+  - [ ] **1.4.4 Criar JwtStrategy (Passport)**
+    - Criar `server/src/auth/strategies/jwt.strategy.ts`
+    - Estender `PassportStrategy(Strategy)`
+    - Configurar extração do token (header `Authorization: Bearer`)
+    - Validar assinatura e expiração
+    - Retornar payload do usuário
+  - [ ] **1.4.5 Configurar JwtModule**
+    - Importar `JwtModule.register()` no `AuthModule`
+    - Configurar secret e expiresIn do `.env`
+    - Registrar `JwtStrategy` como provider
+- [ ] 💾 **COMMIT:** `feat: add auth endpoints and jwt strategy`
 - [ ] **1.4 🛡️ Guards (RBAC)**
   - Decorator `@Roles()`.
   - `RolesGuard` e `TeamsGuard`.

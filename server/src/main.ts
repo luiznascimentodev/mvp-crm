@@ -1,36 +1,45 @@
-import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
-import { ConfigService } from '@nestjs/config';
-import { Logger } from 'nestjs-pino';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
-    { bufferLogs: true },
+    new FastifyAdapter({ logger: false }),
   );
 
-  app.useLogger(app.get(Logger));
+  const logger = new Logger('Bootstrap');
 
-  await app.register(helmet);
-  app.enableCors();
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: [`'self'`],
+        styleSrc: [`'self'`, `'unsafe-inline'`],
+        imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+        scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+      },
+    },
+  });
 
-  const httpAdapter = app.get(HttpAdapterHost);
-  const logger = app.get(Logger);
-  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter, logger));
+  // ← REMOVEMOS app.useGlobalFilters() (vai para AppModule)
 
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT');
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
-  await app.listen(port!, '0.0.0.0');
+  const port = process.env.PORT || 3333;
+  await app.listen({ port: Number(port), host: '0.0.0.0' });
 
-  logger.log(` Server running on http://0.0.0.0:${port}`);
+  logger.log(`Application is running on: http://localhost:${port}`);
 }
 
 void bootstrap();
