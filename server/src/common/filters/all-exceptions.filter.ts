@@ -6,10 +6,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { Logger } from 'nestjs-pino';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
+    private readonly logger: Logger,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
@@ -49,6 +53,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       Object.assign(responsePayload, exceptionResponse);
     } else if (typeof exceptionResponse === 'string') {
       Object.assign(responsePayload, { message: exceptionResponse });
+    }
+
+    if (httpStatus >= 500) {
+      this.logger.error(exception, `Erro Crítico no Endpoint: ${requestUrl}`);
+    } else {
+      this.logger.warn(
+        ` Erro de Cliente (${httpStatus}) no Endpoint: ${requestUrl}`,
+      );
     }
 
     httpAdapter.reply(ctx.getResponse(), responsePayload, httpStatus);

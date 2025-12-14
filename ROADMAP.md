@@ -55,14 +55,14 @@
   - Definir atores (Admin, Manager, Seller).
   - Criar diagrama UML (PlantUML ou Mermaid).
 - [x] 💾 **COMMIT:** `docs: add use case diagram`
-- [ ] **0.3 🛡️ Hardening & Config**
+- [x] **0.3 🛡️ Hardening & Config**
   - Configurar `ConfigModule` com validação **Zod**.
   - Configurar `FastifyAdapter` e `helmet`.
   - **Global Filter:** Criar `AllExceptionsFilter` para padronizar erros JSON (RFC 7807).
-- [ ] 💾 **COMMIT:** `feat: setup security headers and global error handling`
-- [ ] **0.4 Dockerização (Infra Local)**
+- [x] 💾 **COMMIT:** `feat: setup security headers and global error handling`
+- [x] **0.4 Dockerização (Infra Local)**
   - Criar `docker-compose.yml`: Postgres, Redis, MinIO.
-- [ ] 💾 **COMMIT:** `ops: add docker-compose for local development`
+- [x] 💾 **COMMIT:** `ops: add docker-compose for local development`
 - [ ] **0.5 📊 Logging (Observabilidade)**
   - Instalar **Pino** (`npm i pino pino-http pino-pretty nestjs-pino`).
   - Criar `LoggerModule` e `LoggerService` customizado:
