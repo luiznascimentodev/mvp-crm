@@ -1,177 +1,218 @@
 # 🗺️ Roadmap: Orbit CRM (NestJS Enterprise Edition)
 
-> **Visão do Projeto:** Uma plataforma de CRM com arquitetura de **Monólito Modular** baseada em **NestJS**, simulando um ambiente corporativo real. O sistema utiliza **Segurança Ofensiva**, **Processamento Assíncrono** e **Gestão de Arquivos em Nuvem**.
+> **Visão do Projeto:** Uma plataforma de CRM com arquitetura de **Monólito Modular** baseada em **NestJS**, simulando um ambiente corporativo real. O sistema utiliza **Segurança Ofensiva**, **Processamento Assíncrono**, **Colaboração em Tempo Real** e **Type-Safety Ponta a Ponta**.
+
+**Estratégia de Versionamento:**
+
+- **Conventional Commits:** `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `ops:`.
+- **Atomicidade:** Commits pequenos que contam a história da construção passo a passo.
 
 ---
 
 ## 💎 Pilares Técnicos & Parâmetros de Mercado
 
-1.  **Arquitetura NestJS (Opinionated):** Uso estrito de Módulos, Controllers, Services e Injeção de Dependência (DI) para garantir escalabilidade e testabilidade.
-2.  **Storage Seguro & Performático:** Uploads de arquivos (Contratos/Propostas) usando **Presigned URLs**. O backend apenas autoriza, o frontend envia direto para o Object Storage (S3/MinIO).
-3.  **Assincronicidade (Background Jobs):** Emails e tarefas pesadas são processados por Workers (BullMQ + Redis), garantindo que a API principal permaneça rápida.
-4.  **Rastreabilidade (Audit Logs via Interceptors):** Cada alteração de dado gera um rastro imutável ("Quem, Quando, Onde") interceptado automaticamente.
-5.  **Qualidade Assegurada (QA):** Cobertura de testes unitários (Vitest) e testes de ponta a ponta (Playwright) para fluxos críticos.
+1.  **Arquitetura NestJS (Opinionated):** Uso estrito de Módulos, Controllers, Services e Injeção de Dependência (DI).
+2.  **Type-Safety Ponta a Ponta:** O Frontend usa um **SDK gerado automaticamente** a partir do Swagger do Backend.
+3.  **Storage Seguro:** Uploads via **Presigned URLs** diretas para S3/MinIO.
+4.  **Assincronicidade:** Workers dedicados (BullMQ) para tarefas pesadas.
+5.  **Qualidade Assegurada (QA):** TDD com Vitest e E2E com Playwright.
 
 ---
 
 ## 🛠️ Tech Stack "State-of-the-Art" (Dezembro 2025)
 
-| Camada        | Tecnologia              | Versão              | Justificativa de Mercado                              |
-| :------------ | :---------------------- | :------------------ | :---------------------------------------------------- |
-| **Runtime**   | Node.js                 | **v24.12.0**        | Estabilidade LTS.                                     |
-| **Framework** | **NestJS**              | **v11.0**           | Padrão Enterprise para Node.js (Modular/DI).          |
-| **Database**  | PostgreSQL              | **v17.2**           | ACID Compliance.                                      |
-| **ORM**       | Prisma                  | **v6.16.0**         | Type-safety e produtividade.                          |
-| **Frontend**  | React                   | **v19.2**           | React Compiler e Server Actions.                      |
-| **State**     | **Zustand**             | **v5.0**            | Gerenciamento de estado leve e simples (Client-side). |
-| **Async**     | BullMQ                  | **v5.12**           | Filas robustas sobre Redis (via `@nestjs/bull`).      |
-| **Docs**      | **Swagger**             | **@nestjs/swagger** | Geração automática de OpenAPI via Decorators.         |
-| **Tests**     | Vitest & **Playwright** | **Latest**          | A suíte de testes E2E mais rápida e confiável.        |
-| **Infra**     | Kubernetes              | **v1.31+**          | Orquestração padrão Enterprise.                       |
+| Camada        | Tecnologia     | Versão       | Justificativa de Mercado             |
+| :------------ | :------------- | :----------- | :----------------------------------- |
+| **Runtime**   | **Node.js**    | **v24.12.0** | Estabilidade LTS.                    |
+| **Framework** | **NestJS**     | **v11.0**    | Padrão Enterprise.                   |
+| **Adapter**   | **Fastify**    | **v5.x**     | Performance HTTP.                    |
+| **Database**  | **PostgreSQL** | **v17.2**    | ACID Compliance.                     |
+| **ORM**       | **Prisma**     | **v6.16.0**  | Type-safety.                         |
+| **Frontend**  | **React**      | **v19.2**    | React Compiler.                      |
+| **SDK Gen**   | **Hey API**    | **Latest**   | Geração de Client Fetch via Swagger. |
+| **Async**     | **BullMQ**     | **v5.12**    | Filas Redis.                         |
+| **Tests**     | **Playwright** | **Latest**   | E2E Tests.                           |
 
 ---
 
 ## 🚩 Milestone 0: Fundação, Arquitetura e Ambiente Seguro
 
-**Objetivo:** Base sólida com estrutura Modular do NestJS.
+**Objetivo:** Base sólida com estrutura Modular do NestJS e Tooling.
 
-- [ ] **0.1 Setup do Monorepo**
-  - Estrutura `/server` (NestJS App), `/web` (React + Vite), `/k8s`, `/docs`.
-- [ ] **0.2 Tooling & Quality Gates**
-  - ESLint 9, Prettier, Husky.
-- [ ] **0.3 🛡️ Hardening & Env Validation**
-  - Configurar `ConfigModule` do NestJS com validação **Zod**.
-  - Configurar `helmet` (Security Headers) no `main.ts`.
+- [ ] **0.1 Setup do Monorepo (Workspaces)**
+  - Inicializar Git.
+  - Criar `package.json` raiz com workspaces: `["server", "web"]`.
+  - Criar pasta `/server` (`nest new server`).
+  - Criar pasta `/web` (`npm create vite@latest web`).
+- [ ] 💾 **COMMIT:** `chore: init monorepo structure with npm workspaces`
+- [ ] **0.2 Tooling & Linting**
+  - Configurar ESLint 9 (Flat Config) na raiz.
+  - Configurar Prettier e `.editorconfig`.
+  - Configurar Husky e Commitlint.
+- [ ] 💾 **COMMIT:** `chore: configure strict eslint, prettier and husky`
+- [ ] **0.3 🛡️ Hardening & Config**
+  - Configurar `ConfigModule` com validação **Zod**.
+  - Configurar `FastifyAdapter` e `helmet`.
+  - **Global Filter:** Criar `AllExceptionsFilter` para padronizar erros JSON (RFC 7807).
+- [ ] 💾 **COMMIT:** `feat: setup security headers and global error handling`
 - [ ] **0.4 Dockerização (Infra Local)**
-  - `docker-compose.yml`: Postgres, Redis, MinIO.
+  - Criar `docker-compose.yml`: Postgres, Redis, MinIO.
+- [ ] 💾 **COMMIT:** `ops: add docker-compose for local development`
 - [ ] **0.5 Hello World TDD**
-  - Configurar **Vitest** no NestJS (substituindo Jest padrão para mais velocidade).
-  - Teste do `AppController`.
+  - Configurar **Vitest** no NestJS.
+  - Teste do `AppController` (Health Check).
+- [ ] 💾 **COMMIT:** `test: configure vitest and add health check test`
 - [ ] 🏷️ **TAG:** `git tag -a v0.1.0 -m "Milestone 0: NestJS Foundation"`
 
 ---
 
-## 🚩 Milestone 1: Identidade, Hierarquia e Acesso (Auth + RBAC)
+## 🚩 Milestone 1: Identidade, Hierarquia e SDK Automation
 
-**Objetivo:** Autenticação segura usando Guards e Decorators.
+**Objetivo:** Auth segura e integração Front-Back automatizada.
 
-- [ ] **1.1 📐 Modelagem de Domínio (Modules)**
-  - Criar `AuthModule`, `UsersModule`, `TeamsModule`.
-  - Schema Prisma: `User`, `Team`, `Role` (MANAGER, SELLER).
-- [ ] **1.2 TDD: Services de Auth**
-  - `AuthService`: Login/Register com Argon2id.
-  - `JwtStrategy`: Configurar Passport JWT.
-- [ ] **1.3 🛡️ Guards & Decorators (RBAC)**
-  - Criar `@Roles()` decorator.
-  - Criar `RolesGuard` e `TeamsGuard` para proteger rotas.
-- [ ] **1.4 📚 Documentação Viva**
-  - Configurar `@nestjs/swagger` no `main.ts`.
-  - Decorar DTOs com `@ApiProperty()` para gerar docs automáticas.
-- [ ] 💾 **COMMIT:** `feat: auth module with guards and swagger`
-- [ ] 🏷️ **TAG:** `git tag -a v0.2.0 -m "Milestone 1: Auth & Hierarchy"`
+- [ ] **1.1 📐 Modelagem de Domínio (Prisma)**
+  - Schema: `User`, `Team`, `Role`.
+  - Migration Dev.
+- [ ] 💾 **COMMIT:** `feat: add user, team and role prisma schema`
+- [ ] **1.2 TDD: Auth Service (Lógica)**
+  - `AuthService`: Register com Argon2.
+  - `JwtStrategy`: Passport JWT.
+- [ ] 💾 **COMMIT:** `feat: implement secure auth logic with argon2`
+- [ ] **1.3 🛡️ Guards (RBAC)**
+  - Decorator `@Roles()`.
+  - `RolesGuard` e `TeamsGuard`.
+- [ ] 💾 **COMMIT:** `feat: add rbac guards`
+- [ ] **1.4 📚 Docs & SDK Generation**
+  - Configurar Swagger no Backend.
+  - Configurar `@hey-api/openapi-ts` no Frontend.
+  - Script `npm run generate:sdk` que lê o Swagger e cria o cliente TypeScript.
+- [ ] 💾 **COMMIT:** `chore: setup automated sdk generation from swagger`
+- [ ] 🏷️ **TAG:** `git tag -a v0.2.0 -m "Milestone 1: Auth & SDK"`
 
 ---
 
-## 🚩 Milestone 2: Gestão de Contatos, Auditoria e UX Premium
+## 🚩 Milestone 2: Gestão de Contatos, Seeding e UX
 
-**Objetivo:** CRUD robusto com rastreabilidade via Interceptors.
+**Objetivo:** CRUD, Dados Fakes e Interface.
 
 - [ ] **2.1 📐 Auditoria (AOP)**
-  - Criar `AuditInterceptor`: Intercepta mutações (POST/PUT/DELETE) e salva logs no banco automaticamente.
-- [ ] **2.2 Backend: CRUD com Auditoria (TDD)**
-  - `ContactsModule`.
-  - Uso de DTOs com `ZodValidationPipe` para validar entradas.
-- [ ] **2.3 Frontend: Command Palette & Zustand**
-  - Configurar **Zustand Store** (`useUIStore`) para controlar modais e sidebar.
-  - Componente `CmdkDialog` (Ctrl+K).
+  - `AuditInterceptor` para logar mutações.
+- [ ] 💾 **COMMIT:** `feat: implement audit log interceptor`
+- [ ] **2.2 Backend: Contacts Module (TDD)**
+  - CRUD com isolamento por Time.
+  - **Database Seeding:** Criar script `prisma/seed.ts` (Faker.js) para popular banco.
+- [ ] 💾 **COMMIT:** `feat: contacts crud and database seeder`
+- [ ] **2.3 Frontend: Setup & Navigation**
+  - Shadcn/UI, Tailwind v4.
+  - Componente `CmdkDialog` (Command Palette).
+  - Integrar API usando o SDK gerado.
+- [ ] 💾 **COMMIT:** `feat(web): setup ui and command palette navigation`
 - [ ] **2.4 Frontend: Data Grid**
-  - TanStack Table integrado com API.
-- [ ] 💾 **COMMIT:** `feat: contacts module with audit interceptor`
+  - Tabela de Contatos Server-side.
+- [ ] 💾 **COMMIT:** `feat(web): contacts data grid`
 - [ ] 🏷️ **TAG:** `git tag -a v0.3.0 -m "Milestone 2: Contacts & UX"`
 
 ---
 
-## 🚩 Milestone 3: Pipeline Real-Time & Gestão de Arquivos
+## 🚩 Milestone 3: Pipeline Real-Time & Storage
 
-**Objetivo:** Colaboração síncrona e Anexos.
+**Objetivo:** Colaboração síncrona e Uploads.
 
-- [ ] **3.1 📐 Storage (Presigned URLs)**
-  - `StorageModule`.
-  - Serviço para gerar URLs de upload (MinIO/S3).
-- [ ] **3.2 Backend: Pipeline Real-Time**
-  - `EventsModule` com `EventsGateway` (`@WebSocketGateway`).
-  - Emitir eventos via Socket.io ao atualizar Deals.
-- [ ] **3.3 Frontend: Kanban**
-  - Dnd-kit + Optimistic UI.
-  - Upload de arquivos direto para Storage.
-- [ ] 💾 **COMMIT:** `feat: kanban with websockets and s3`
+- [ ] **3.1 📐 Storage Module**
+  - Presigned URLs para S3/MinIO.
+  - Validação de segurança (MIME/Size).
+- [ ] 💾 **COMMIT:** `feat: secure storage module`
+- [ ] **3.2 Backend: WebSockets**
+  - `EventsGateway` (Socket.io).
+  - Evento `deal.moved`.
+- [ ] 💾 **COMMIT:** `feat: websocket gateway`
+- [ ] **3.3 Frontend: Kanban & Upload**
+  - `dnd-kit` + Optimistic Updates.
+  - Upload direto para S3.
+- [ ] 💾 **COMMIT:** `feat(web): kanban board with sync and uploads`
 - [ ] 🏷️ **TAG:** `git tag -a v0.4.0 -m "Milestone 3: Pipeline & Storage"`
 
 ---
 
-## 🚩 Milestone 4: Gestão de Equipes & Processamento Assíncrono
+## 🚩 Milestone 4: Processamento Assíncrono (Workers)
 
-**Objetivo:** Infraestrutura de Filas com NestJS Bull.
+**Objetivo:** Filas para tarefas pesadas.
 
-- [ ] **4.1 📐 Workers (BullMQ)**
-  - Configurar `BullModule.forRoot()`.
-  - Criar `MailProcessor` (`@Processor('mail')`) para enviar emails.
-- [ ] **4.2 Backend: Team Management**
-  - `InviteMemberService`: Adiciona job na fila.
-- [ ] 💾 **COMMIT:** `feat: team management with bull queues`
+- [ ] **4.1 📐 BullMQ Setup**
+  - Fila `mail-queue`.
+- [ ] 💾 **COMMIT:** `chore: setup bullmq`
+- [ ] **4.2 Workers & Invites**
+  - `MailProcessor` (Worker).
+  - `InviteMemberService` (Producer).
+- [ ] 💾 **COMMIT:** `feat: mail processor and invite logic`
+- [ ] **4.3 Frontend: Team UI**
+  - Modal de convite de membros.
+- [ ] 💾 **COMMIT:** `feat(web): team management ui`
 - [ ] 🏷️ **TAG:** `git tag -a v0.4.5 -m "Milestone 4: Async Teams"`
 
 ---
 
-## 🚩 Milestone 5: Dashboard & Testes E2E
+## 🚩 Milestone 5: Analytics & Testes E2E
 
-**Objetivo:** Analytics e Garantia de Qualidade.
+**Objetivo:** Qualidade final e Dashboards.
 
-- [ ] **5.1 Backend: Agregações**
-  - `DashboardModule`.
-- [ ] **5.2 Frontend: Gráficos**
+- [ ] **5.1 Backend: Dashboard**
+  - Agregações com Prisma (Group By).
+- [ ] 💾 **COMMIT:** `feat: dashboard aggregations`
+- [ ] **5.2 Frontend: Charts**
   - Recharts.
+- [ ] 💾 **COMMIT:** `feat(web): analytics dashboard`
 - [ ] **5.3 🧪 Testes E2E (Playwright)**
-  - Instalar e configurar **Playwright**.
-  - Criar spec: `tests/e2e/auth-flow.spec.ts` (Login -> Dashboard).
-  - Criar spec: `tests/e2e/crm-flow.spec.ts` (Criar Lead -> Mover no Kanban).
-- [ ] 💾 **COMMIT:** `test: e2e scenarios with playwright`
+  - `auth.spec.ts` (Login).
+  - `crm.spec.ts` (Fluxo completo).
+- [ ] 💾 **COMMIT:** `test: playwright e2e scenarios`
 - [ ] 🏷️ **TAG:** `git tag -a v0.5.0 -m "Milestone 5: Dashboard & QA"`
 
 ---
 
-## 🚩 Milestone 6: Auditoria de Segurança & Hardening
+## 🚩 Milestone 6: Security Hardening (Blindagem)
 
-**Objetivo:** Blindagem pré-deploy.
+**Objetivo:** Auditoria e Proteção.
 
-- [ ] **6.1 🛡️ Security Audit**
-  - Configurar `ThrottlerModule` (Rate Limiting) globalmente.
-  - Validar Uploads e Permissões.
-- [ ] **6.2 🛡️ Supply Chain**
-  - `npm audit`.
+- [ ] **6.1 🛡️ Security Gates**
+  - Implementar `ThrottlerModule` (Rate Limiting).
+  - Configurar CORS restrito (Whitelist).
+- [ ] **6.2 🛡️ Pentest Simulado (TDD)**
+  - Criar teste que tenta acessar rota de Admin com token de Vendedor.
+  - Criar teste que tenta Upload de arquivo malicioso.
+- [ ] **6.3 🛡️ Supply Chain**
+  - Rodar `npm audit` e corrigir vulnerabilidades.
+- [ ] 💾 **COMMIT:** `chore: apply security hardening`
 - [ ] 🏷️ **TAG:** `git tag -a v0.6.0 -m "Milestone 6: Security Hardening"`
 
 ---
 
 ## 🚩 Milestone 7: Orquestração Kubernetes Multi-Ambiente
 
-**Objetivo:** Deploy profissional.
+**Objetivo:** Deploy profissional com separação de cargas.
 
-- [ ] **7.1 Arquitetura de Processos**
-  - NestJS Standalone App para Workers vs HTTP App.
-- [ ] **7.2 Manifestos K8s**
-  - Deployments, Services, Secrets.
+- [ ] **7.1 Arquitetura de Processos (NestJS Standalone)**
+  - Criar entrypoint separado `src/worker.ts` (apenas carrega o módulo de filas, sem servidor HTTP).
+- [ ] **7.2 Manifestos K8s (Workloads)**
+  - `k8s/deployment-api.yaml`: Réplicas > 1.
+  - `k8s/deployment-worker.yaml`: Consumidor de filas dedicado.
+  - `k8s/statefulset-minio.yaml`: Storage para Staging.
+  - `k8s/service.yaml` e `k8s/ingress.yaml`.
+- [ ] 💾 **COMMIT:** `ops: add k8s manifests with api and worker separation`
 - [ ] 🏷️ **TAG:** `git tag -a v0.7.0 -m "Milestone 7: Kubernetes Orchestration"`
 
 ---
 
 ## 🚩 Milestone 8: CI/CD & Observabilidade
 
-**Objetivo:** Automação Final.
+**Objetivo:** Automação Final e Monitoramento.
 
-- [ ] **8.1 Pipeline CI/CD**
-  - Build Docker.
-  - Execução dos testes Playwright no CI (Headless).
-- [ ] **8.2 Observabilidade**
-  - Monitoramento Redis.
+- [ ] **8.1 Pipeline CI/CD (GitHub Actions)**
+  - Workflow `.github/workflows/ci.yml`.
+  - Jobs: Install -> Lint -> Test (Unit) -> E2E (Playwright Headless) -> Build Docker.
+- [ ] **8.2 Docker Builds Otimizados**
+  - Ajustar `Dockerfile` para Multi-stage build (Target: API vs Worker).
+- [ ] **8.3 Observabilidade Básica**
+  - Endpoint `/health` retornando status do Redis e DB.
+- [ ] 💾 **COMMIT:** `ci: setup github actions pipeline`
 - [ ] 🏷️ **TAG:** `git tag -a v1.0.0 -m "Release 1.0: Enterprise Gold"`
