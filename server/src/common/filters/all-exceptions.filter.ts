@@ -27,7 +27,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       // O Linter reclama aqui porque .getResponse() retorna any.
       // Desabilitamos nesta linha específica e salvamos como 'unknown' (seguro).
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       exceptionResponse = exception.getResponse();
     } else {
       exceptionResponse = { message: 'Internal Server Error' };

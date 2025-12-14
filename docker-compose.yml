@@ -1,0 +1,48 @@
+name: orbit-crm # Nome do projeto no Docker
+
+services:
+  # 1. Banco de Dados Relacional (PostgreSQL)
+  postgres:
+    image: postgres:17-alpine # Versão leve (Alpine) e atualizada (17)
+    container_name: orbit_postgres
+    ports:
+      - '5432:5432' # Libera a porta 5432 do container para o seu PC
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: orbit_crm
+    volumes:
+      - pg_data:/var/lib/postgresql/data # Persistência: salva os dados num volume virtual
+    restart: always
+
+  # 2. Banco de Dados em Memória / Filas (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: orbit_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes # Garante persistência básica dos dados
+    restart: always
+
+  # 3. Object Storage (MinIO - Compatível com S3)
+  minio:
+    image: minio/minio:latest
+    container_name: orbit_minio
+    ports:
+      - '9000:9000' # Porta da API (onde o backend conecta)
+      - '9001:9001' # Porta do Console Web (onde você vê os arquivos no navegador)
+    environment:
+      MINIO_ROOT_USER: docker
+      MINIO_ROOT_PASSWORD: docker123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001" # Inicia o servidor e o console
+    restart: always
+
+# Definição dos Volumes (Discos Virtuais)
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
