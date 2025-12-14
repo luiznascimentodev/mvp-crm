@@ -1,4 +1,4 @@
-# 🗺️ Roadmap: CRM Enterprise MVP (2025 Edition)
+# 🗺️ Roadmap: Orbit CRM (2025 Edition)
 
 > **Visão do Projeto:** Uma plataforma de CRM "Full-Cycle", simulando um ambiente corporativo real. O sistema utiliza **Arquitetura Orientada a Eventos**, **Segurança Ofensiva**, **Processamento Assíncrono** e **Gestão de Arquivos em Nuvem**.
 
