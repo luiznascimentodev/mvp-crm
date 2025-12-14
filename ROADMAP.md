@@ -162,43 +162,211 @@
 - [x] 💾 **COMMIT:** `feat: implement auth service with argon2 and tdd`
 - [ ] **1.4 Auth Controller & Endpoints HTTP**
   - [ ] **1.4.1 Implementar Endpoint de Registro**
-    - Adicionar método `@Post('register')` no `AuthController`
-    - Injetar `AuthService` via DI
-    - Retornar HTTP 201 (Created) com dados do usuário
-    - Validação automática via `RegisterDto`
-  - [ ] **1.4.2 Teste E2E do Endpoint**
-    - Criar teste de integração (request HTTP real)
-    - Testar fluxo completo: validação → serviço → banco
-    - Validar resposta 201 e 409 (conflito)
-  - [ ] **1.4.3 Implementar Login e JWT**
-    - Criar `AuthService.login()`:
-      - Buscar usuário por email
-      - Verificar senha com `argon2.verify()`
-      - Gerar JWT com `JwtService.sign()`
+    - [ ] Criar método `register()` no `AuthController`
+      - Adicionar decorator `@Post('register')`
+      - Adicionar decorator `@HttpCode(HttpStatus.CREATED)`
+      - Injetar `AuthService` no constructor
+      - Receber `RegisterDto` com decorator `@Body()`
+      - Chamar `authService.register(registerDto)`
+      - Retornar objeto do usuário (sem senha)
+    - [ ] Adicionar documentação Swagger (preparação)
+      - `@ApiTags('auth')`
+      - `@ApiOperation({ summary: 'Register new user' })`
+      - `@ApiResponse({ status: 201, description: 'User created' })`
+      - `@ApiResponse({ status: 409, description: 'Email already exists' })`
+  - [ ] **1.4.2 Teste E2E do Endpoint de Registro**
+    - [ ] Configurar setup de teste E2E
+      - Criar arquivo `auth.e2e.spec.ts` em `server/test/`
+      - Configurar TestingModule com todos os módulos necessários
+      - Inicializar aplicação NestJS para testes
+      - Configurar limpeza do banco após cada teste
+    - [ ] Teste: Registro com sucesso (201)
+      - Enviar POST `/auth/register` com dados válidos
+      - Validar status 201
+      - Validar que resposta contém id, email, name, role
+      - Validar que resposta NÃO contém passwordHash
+      - Validar que usuário foi criado no banco
+    - [ ] Teste: Email duplicado (409)
+      - Criar usuário no banco (seed)
+      - Enviar POST com mesmo email
+      - Validar status 409
+      - Validar mensagem de erro
+    - [ ] Teste: Validação de campos (400)
+      - Email inválido → 400
+      - Senha < 8 caracteres → 400
+      - Nome vazio → 400
+      - TenantId ausente → 400
+  - [ ] **1.4.3 Implementar Login com JWT**
+    - [ ] Configurar JwtModule no AuthModule
+      - Importar `JwtModule.registerAsync()`
+      - Injetar `ConfigService` para ler variáveis do `.env`
+      - Configurar `secret: configService.get('JWT_SECRET')`
+      - Configurar `signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') }`
+    - [ ] Criar método `login()` no AuthService (TDD)
+      - [ ] Teste RED: "should return access_token for valid credentials"
+      - [ ] Teste RED: "should throw UnauthorizedException for invalid email"
+      - [ ] Teste RED: "should throw UnauthorizedException for invalid password"
+      - [ ] Implementação:
+        - Buscar usuário por email e tenantId
+        - Lançar `UnauthorizedException` se não encontrar
+        - Verificar senha com `argon2.verify(storedHash, plainPassword)`
+        - Lançar `UnauthorizedException` se senha inválida
+        - Criar payload JWT: `{ sub: user.id, email: user.email, tenantId: user.tenantId, role: user.role }`
+        - Assinar token com `jwtService.sign(payload)`
+        - Retornar `{ access_token: token }`
+      - [ ] Testes GREEN: Todos passando
+    - [ ] Criar endpoint POST `/auth/login` no AuthController
+      - Adicionar método `login()`
+      - Receber `LoginDto` com `@Body()`
+      - Chamar `authService.login(loginDto)`
       - Retornar `{ access_token }`
-    - Criar endpoint `@Post('login')` no controller
-    - Testes TDD para login (credenciais válidas/inválidas)
+    - [ ] Teste E2E do Login
+      - Criar usuário no banco (seed com senha conhecida)
+      - POST `/auth/login` com credenciais corretas → 200 + token
+      - POST `/auth/login` com email errado → 401
+      - POST `/auth/login` com senha errada → 401
+      - Validar que token JWT é válido (decodificar payload)
   - [ ] **1.4.4 Criar JwtStrategy (Passport)**
-    - Criar `server/src/auth/strategies/jwt.strategy.ts`
-    - Estender `PassportStrategy(Strategy)`
-    - Configurar extração do token (header `Authorization: Bearer`)
-    - Validar assinatura e expiração
-    - Retornar payload do usuário
-  - [ ] **1.4.5 Configurar JwtModule**
-    - Importar `JwtModule.register()` no `AuthModule`
-    - Configurar secret e expiresIn do `.env`
-    - Registrar `JwtStrategy` como provider
+    - [ ] Criar pasta `server/src/auth/strategies/`
+    - [ ] Criar arquivo `jwt.strategy.ts`
+      - Importar `PassportStrategy` de `@nestjs/passport`
+      - Importar `Strategy, ExtractJwt` de `passport-jwt`
+      - Estender `PassportStrategy(Strategy)`
+      - Injetar `ConfigService` no constructor
+      - Configurar `super()`:
+        - `jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()`
+        - `ignoreExpiration: false`
+        - `secretOrKey: configService.get('JWT_SECRET')`
+      - Implementar `validate(payload)`:
+        - Recebe payload decodificado do JWT
+        - Retornar objeto do usuário: `{ userId: payload.sub, email: payload.email, tenantId: payload.tenantId, role: payload.role }`
+        - Passport injeta retorno em `req.user` automaticamente
+    - [ ] Criar teste unitário `jwt.strategy.spec.ts`
+      - Mockar `ConfigService`
+      - Testar método `validate()`
+      - Validar que retorna dados corretos do payload
+    - [ ] Registrar `JwtStrategy` como provider no `AuthModule`
+  - [ ] **1.4.5 Testar Autenticação com Guard**
+    - [ ] Criar endpoint de teste protegido
+      - Adicionar método `@Get('profile')` no `AuthController`
+      - Adicionar `@UseGuards(AuthGuard('jwt'))`
+      - Retornar `req.user` (injeta automaticamente)
+    - [ ] Teste E2E de rota protegida
+      - Fazer login → obter token
+      - GET `/auth/profile` SEM token → 401
+      - GET `/auth/profile` com token inválido → 401
+      - GET `/auth/profile` com token válido → 200 + dados do usuário
+      - GET `/auth/profile` com token expirado → 401 (usar mock de tempo)
 - [ ] 💾 **COMMIT:** `feat: add auth endpoints and jwt strategy`
-- [ ] **1.4 🛡️ Guards (RBAC)**
-  - Decorator `@Roles()`.
-  - `RolesGuard` e `TeamsGuard`.
-  - **Lead Ownership Guard:** Implementar regra de negócio onde vendedores (role=member) só acessam seus próprios leads (`ownerId = userId`), enquanto owners/admins acessam todos os leads do tenant
-  - TDD: Teste garantindo que vendedor A não acessa lead do vendedor B
+- [ ] **1.5 🛡️ Guards RBAC (Controle de Acesso)**
+  - [ ] **1.5.1 Criar Decorator @Roles()**
+    - [ ] Criar `server/src/common/decorators/roles.decorator.ts`
+      - Usar `SetMetadata` do NestJS
+      - Exportar função `Roles(...roles: Role[])`
+      - Armazenar roles na metadata da rota
+    - [ ] Criar enum de roles (se não existir)
+      - `OWNER`, `ADMIN`, `MANAGER`, `MEMBER`
+  - [ ] **1.5.2 Implementar RolesGuard**
+    - [ ] Criar `server/src/common/guards/roles.guard.ts`
+      - Implementar `CanActivate`
+      - Injetar `Reflector` (para ler metadata)
+      - Método `canActivate()`:
+        - Obter roles necessárias da metadata (`@Roles()`)
+        - Se não há roles definidas, permitir acesso
+        - Obter usuário de `request.user` (injetado pelo JwtStrategy)
+        - Verificar se `user.role` está nas roles permitidas
+        - Retornar `true` ou `false`
+    - [ ] Criar testes unitários `roles.guard.spec.ts`
+      - Teste: Permite acesso se usuário tem role correta
+      - Teste: Bloqueia acesso se usuário não tem role
+      - Teste: Permite acesso se rota não tem `@Roles()`
+  - [ ] **1.5.3 Implementar Lead Ownership Guard**
+    - [ ] Criar `server/src/common/guards/lead-ownership.guard.ts`
+      - Implementar `CanActivate`
+      - Injetar `PrismaService`
+      - Método `canActivate()`:
+        - Obter usuário de `request.user`
+        - Se `role === 'OWNER' || role === 'ADMIN'` → permitir (acesso total)
+        - Se `role === 'MEMBER'`:
+          - Extrair `leadId` dos params da rota
+          - Buscar lead no banco (`prisma.lead.findUnique`)
+          - Verificar se `lead.ownerId === user.userId`
+          - Retornar `true` se for dono, `false` caso contrário
+        - Bloquear qualquer outro caso
+    - [ ] Criar testes TDD `lead-ownership.guard.spec.ts`
+      - Mockar `PrismaService`
+      - Teste: OWNER acessa qualquer lead
+      - Teste: ADMIN acessa qualquer lead
+      - Teste: MEMBER acessa apenas seus leads
+      - Teste: MEMBER não acessa lead de outro vendedor (403)
+  - [ ] **1.5.4 Criar Endpoint de Teste para Guards**
+    - [ ] Criar `LeadsController` temporário (só para teste)
+      - `@Get(':id')` com `@Roles('MEMBER')` e `@UseGuards(JwtAuthGuard, RolesGuard, LeadOwnershipGuard)`
+      - Retornar dados do lead
+    - [ ] Teste E2E de RBAC
+      - Criar 2 usuários: vendedor A e vendedor B
+      - Criar lead do vendedor A
+      - Login vendedor A → acessar seu lead → 200
+      - Login vendedor B → tentar acessar lead do A → 403
+      - Login admin → acessar lead do A → 200
+  - [ ] **1.5.5 Documentar Guards no Swagger**
+    - Adicionar `@ApiBearerAuth()` em rotas protegidas
+    - Adicionar `@ApiResponse({ status: 403, description: 'Forbidden' })`
 - [ ] 💾 **COMMIT:** `feat: add rbac guards with lead ownership validation`
-- [ ] **1.5 📚 Docs & SDK Generation**
-  - Configurar Swagger no Backend.
-  - Configurar `@hey-api/openapi-ts` no Frontend.
-  - Script `npm run generate:sdk` que lê o Swagger e cria o cliente TypeScript.
+- [ ] **1.6 📚 Swagger & SDK Auto-geração**
+  - [ ] **1.6.1 Configurar Swagger no Backend**
+    - [ ] Instalar dependências
+      - `npm install @nestjs/swagger --workspace=server`
+    - [ ] Configurar Swagger no `main.ts`
+      - Importar `SwaggerModule, DocumentBuilder`
+      - Criar `SwaggerConfig`:
+        - Título: "Orbit CRM API"
+        - Descrição: "Enterprise CRM with Multi-tenancy"
+        - Versão: "1.0"
+        - Tag: "auth", "leads", "contacts", etc.
+        - Bearer Auth configurado
+      - Criar documento: `SwaggerModule.createDocument(app, config)`
+      - Setup: `SwaggerModule.setup('api/docs', app, document)`
+    - [ ] Adicionar decorators nos DTOs
+      - `@ApiProperty()` em todos os campos
+      - Exemplos de valores
+      - Descrições claras
+    - [ ] Adicionar decorators nos Controllers
+      - `@ApiTags('auth')`
+      - `@ApiOperation({ summary: '...' })`
+      - `@ApiResponse()` para cada status code
+      - `@ApiBearerAuth()` em rotas protegidas
+    - [ ] Testar Swagger UI
+      - Iniciar servidor
+      - Acessar `http://localhost:3333/api/docs`
+      - Validar que todos os endpoints estão documentados
+      - Testar "Try it out" no Swagger
+  - [ ] **1.6.2 Configurar SDK Auto-geração no Frontend**
+    - [ ] Instalar Hey API no workspace web
+      - `npm install @hey-api/openapi-ts --save-dev --workspace=web`
+    - [ ] Criar configuração `web/openapi-ts.config.ts`
+      - Input: `http://localhost:3333/api/docs-json`
+      - Output: `web/src/generated/api`
+      - Client: `fetch`
+      - Tipos: TypeScript
+    - [ ] Adicionar script no `web/package.json`
+      - `"generate:sdk": "openapi-ts"`
+    - [ ] Executar geração inicial
+      - `npm run generate:sdk --workspace=web`
+      - Validar arquivos gerados em `web/src/generated/api/`
+    - [ ] Criar wrapper do SDK
+      - `web/src/lib/api-client.ts`
+      - Configurar baseURL
+      - Configurar interceptors (adicionar token JWT)
+      - Exportar client configurado
+    - [ ] Adicionar .gitignore
+      - Adicionar `web/src/generated/` no `.gitignore`
+      - Manter apenas arquivos de configuração versionados
+  - [ ] **1.6.3 Documentar Processo no README**
+    - Adicionar seção "API Documentation"
+    - Instruções para acessar Swagger
+    - Instruções para gerar SDK: `npm run generate:sdk`
+    - Exemplos de uso do SDK no frontend
 - [ ] 💾 **COMMIT:** `chore: setup automated sdk generation from swagger`
 - [ ] 🏷️ **TAG:** `git tag -a v0.2.0 -m "Milestone 1: Auth & SDK"`
 
@@ -208,30 +376,276 @@
 
 **Objetivo:** CRUD, Dados Fakes e Interface.
 
-- [ ] **2.1 � Atualizar Diagrama de Classes**
-  - Adicionar entidade `Contact` e `AuditLog`.
-  - Atualizar relacionamentos com `Team` e `User`.
+- [ ] **2.1 📊 Atualizar Diagrama de Classes**
+  - [ ] **2.1.1 Modelar Entidade Contact**
+    - Adicionar classe `Contact` no diagrama UML
+    - Atributos: id, tenantId, email, name, phone, company, position, ownerId, createdAt, updatedAt, deletedAt
+    - Relacionamentos: `Contact` N:1 `User` (owner)
+    - Relacionamentos: `Contact` N:1 `Tenant`
+  - [ ] **2.1.2 Modelar Entidade AuditLog**
+    - Adicionar classe `AuditLog` no diagrama
+    - Atributos: id, userId, action, entity, entityId, changes (JSON), timestamp, ip
+    - Relacionamento: `AuditLog` N:1 `User` (quem fez a ação)
+  - [ ] **2.1.3 Atualizar Relacionamentos**
+    - Conectar `Contact` com `User` (ownerId)
+    - Conectar `AuditLog` com todas entidades (polimórfico)
+    - Validar multiplicidades
 - [ ] 💾 **COMMIT:** `docs: update class diagram with contacts module`
 - [ ] **2.2 📐 Modelagem de Auditoria (Prisma)**
-  - Adicionar schema `AuditLog` no Prisma.
-  - Campos: `id`, `userId`, `action`, `entity`, `entityId`, `changes`, `timestamp`, `ip`.
-  - Migration Dev.
+  - [ ] **2.2.1 Criar Schema AuditLog**
+    - [ ] Adicionar model `AuditLog` no `schema.prisma`
+      - Campo `id`: String @id @default(cuid())
+      - Campo `userId`: String (quem fez a ação)
+      - Campo `action`: Enum (`CREATE`, `UPDATE`, `DELETE`)
+      - Campo `entity`: String (nome da tabela: "Contact", "Lead", etc.)
+      - Campo `entityId`: String (ID do registro afetado)
+      - Campo `changes`: Json (diff antes/depois)
+      - Campo `ip`: String? (IP do cliente)
+      - Campo `timestamp`: DateTime @default(now())
+      - Relação com `User`: user User @relation(fields: [userId], references: [id])
+      - Index em userId, entity, timestamp
+  - [ ] **2.2.2 Criar Migration**
+    - Executar `npx prisma migrate dev --name add-audit-log`
+    - Validar SQL gerado
+    - Aplicar migration no banco
+  - [ ] **2.2.3 Gerar Prisma Client**
+    - Executar `npx prisma generate`
+    - Validar tipos TypeScript
 - [ ] 💾 **COMMIT:** `feat: add audit log schema`
-- [ ] **2.3 📐 Auditoria (AOP)**
-  - `AuditInterceptor` para logar mutações no `AuditLog`.
-  - Capturar contexto do usuário autenticado (disponível após Milestone 1).
+- [ ] **2.3 📐 Auditoria (AOP com Interceptor)**
+  - [ ] **2.3.1 Criar AuditInterceptor**
+    - [ ] Criar `server/src/common/interceptors/audit.interceptor.ts`
+      - Implementar `NestInterceptor`
+      - Injetar `PrismaService`
+      - Injetar `Reflector` (para ler metadata)
+      - Método `intercept()`:
+        - Capturar dados ANTES da execução (estado original)
+        - Executar handler (operação real)
+        - Capturar dados DEPOIS (estado modificado)
+        - Calcular diff (comparar before/after)
+        - Criar registro no `AuditLog`
+        - Retornar resultado original
+    - [ ] Criar decorator `@Audit()` customizado
+      - `server/src/common/decorators/audit.decorator.ts`
+      - Usar `SetMetadata` para marcar métodos auditáveis
+      - Aceitar parâmetro `entity: string`
+  - [ ] **2.3.2 Criar Testes do Interceptor**
+    - Mockar `PrismaService`
+    - Teste: Cria log ao criar entidade
+    - Teste: Cria log ao atualizar entidade
+    - Teste: Cria log ao deletar entidade
+    - Teste: Não cria log se método não tem `@Audit()`
+  - [ ] **2.3.3 Integrar com Controllers**
+    - Adicionar `@UseInterceptors(AuditInterceptor)` em ContactsController
+    - Adicionar `@Audit('Contact')` nos métodos create/update/delete
+    - Testar criação de logs automaticamente
 - [ ] 💾 **COMMIT:** `feat: implement audit log interceptor`
 - [ ] **2.4 Backend: Contacts Module (TDD)**
-  - CRUD com isolamento por Time.
-  - **Database Seeding:** Criar script `prisma/seed.ts` (Faker.js) para popular banco.
+  - [ ] **2.4.1 Estrutura do Módulo**
+    - [ ] Criar pasta `server/src/contacts/`
+    - [ ] Criar `contacts.module.ts`
+    - [ ] Criar `contacts.service.ts`
+    - [ ] Criar `contacts.controller.ts`
+    - [ ] Registrar `ContactsModule` no `AppModule`
+  - [ ] **2.4.2 DTOs de Validação**
+    - [ ] Criar pasta `server/src/contacts/dto/`
+    - [ ] Criar `create-contact.dto.ts`:
+      - `@IsEmail()` email
+      - `@IsString()` name (min 2, max 100)
+      - `@IsString() @IsOptional()` phone
+      - `@IsString() @IsOptional()` company
+      - `@IsString() @IsOptional()` position
+    - [ ] Criar `update-contact.dto.ts`:
+      - Estender `PartialType(CreateContactDto)`
+      - Todos os campos opcionais
+    - [ ] Criar `filter-contacts.dto.ts`:
+      - Paginação: page, limit
+      - Filtros: search (nome/email), company, ownerId
+      - Ordenação: sortBy, sortOrder
+  - [ ] **2.4.3 Implementar ContactsService (TDD)**
+    - [ ] Criar `contacts.service.spec.ts`
+    - [ ] Teste: `create()` - cria contato com ownerId do usuário autenticado
+    - [ ] Teste: `findAll()` - lista apenas contatos do tenant (multi-tenancy)
+    - [ ] Teste: `findAll()` - MEMBER vê apenas seus contatos
+    - [ ] Teste: `findAll()` - OWNER/ADMIN vê todos contatos do tenant
+    - [ ] Teste: `findOne()` - retorna contato se pertence ao tenant
+    - [ ] Teste: `findOne()` - lança NotFoundException se não encontrar
+    - [ ] Teste: `update()` - atualiza apenas se for dono ou admin
+    - [ ] Teste: `update()` - lança ForbiddenException se MEMBER tentar atualizar contato de outro
+    - [ ] Teste: `remove()` - soft delete (seta deletedAt)
+    - [ ] Teste: `remove()` - lança ForbiddenException se não for dono
+    - [ ] Implementação de todos os métodos
+  - [ ] **2.4.4 Criar ContactsController**
+    - [ ] `@Post()` - Criar contato
+      - `@UseGuards(JwtAuthGuard)`
+      - `@ApiOperation()`
+      - Extrair userId de `req.user`
+      - Setar ownerId automaticamente
+    - [ ] `@Get()` - Listar contatos (paginado)
+      - Aplicar filtros de tenant
+      - Aplicar RBAC (member vê só os seus)
+      - Retornar com paginação: `{ data, total, page, limit }`
+    - [ ] `@Get(':id')` - Buscar um contato
+      - Validar ownership
+    - [ ] `@Patch(':id')` - Atualizar contato
+      - Validar ownership
+      - `@Audit('Contact')`
+    - [ ] `@Delete(':id')` - Deletar contato (soft delete)
+      - Validar ownership
+      - `@Audit('Contact')`
+  - [ ] **2.4.5 Testes E2E de Contacts**
+    - POST `/contacts` → 201 (cria com ownerId correto)
+    - GET `/contacts` como MEMBER → lista apenas seus contatos
+    - GET `/contacts` como OWNER → lista todos do tenant
+    - GET `/contacts/:id` de outro vendedor → 403
+    - PATCH `/contacts/:id` de outro vendedor → 403
+    - DELETE `/contacts/:id` → soft delete (deletedAt não é null)
+  - [ ] **2.4.6 Database Seeding**
+    - [ ] Instalar Faker.js
+      - `npm install @faker-js/faker --save-dev --workspace=server`
+    - [ ] Criar `server/prisma/seed.ts`
+      - Importar `PrismaClient` e `faker`
+      - Criar função `main()`:
+        - Limpar dados existentes (opcional em dev)
+        - Criar 2 tenants
+        - Criar 5 usuários por tenant (1 owner, 1 admin, 3 members)
+        - Criar 50 contatos por tenant (distribuir entre vendedores)
+        - Criar 20 leads por tenant
+        - Criar 10 deals por tenant
+        - Criar 30 atividades (distribuídas entre leads/contacts/deals)
+      - Executar seed
+    - [ ] Configurar script no `server/package.json`
+      - `"seed": "tsx prisma/seed.ts"`
+    - [ ] Testar seed: `npm run seed --workspace=server`
 - [ ] 💾 **COMMIT:** `feat: contacts crud and database seeder`
 - [ ] **2.5 Frontend: Setup & Navigation**
-  - Shadcn/UI, Tailwind v4.
-  - Componente `CmdkDialog` (Command Palette).
-  - Integrar API usando o SDK gerado.
+  - [ ] **2.5.1 Instalar Dependências UI**
+    - [ ] Shadcn/UI
+      - `npx shadcn@latest init --workspace=web`
+      - Configurar Tailwind v4
+      - Escolher tema e cores
+    - [ ] Instalar componentes base
+      - `npx shadcn@latest add button card input label --workspace=web`
+      - `npx shadcn@latest add dialog dropdown-menu table --workspace=web`
+      - `npx shadcn@latest add command --workspace=web` (Command Palette)
+    - [ ] Configurar React Router
+      - `npm install react-router-dom --workspace=web`
+      - Criar estrutura de rotas
+  - [ ] **2.5.2 Estrutura de Pastas Frontend**
+    - [ ] Criar `web/src/components/` (componentes reutilizáveis)
+    - [ ] Criar `web/src/pages/` (páginas/rotas)
+    - [ ] Criar `web/src/layouts/` (layouts com sidebar/header)
+    - [ ] Criar `web/src/hooks/` (custom hooks)
+    - [ ] Criar `web/src/lib/` (utilitários)
+    - [ ] Criar `web/src/stores/` (Zustand para estado global)
+  - [ ] **2.5.3 Implementar Command Palette (Cmdk)**
+    - [ ] Criar `web/src/components/command-palette.tsx`
+      - Usar componente `<Command>` do Shadcn
+      - Atalho: Ctrl+K (Windows) / Cmd+K (Mac)
+      - Seções: Navegação, Ações, Contatos recentes
+      - Navegação rápida para: Dashboard, Contatos, Pipeline, Configurações
+    - [ ] Integrar no layout principal
+      - Adicionar listener global de teclado
+      - Renderizar dialog com Command
+  - [ ] **2.5.4 Criar Layout Principal**
+    - [ ] Criar `web/src/layouts/dashboard-layout.tsx`
+      - Sidebar com navegação
+      - Header com breadcrumbs e user menu
+      - Outlet para renderizar páginas
+      - Command Palette integrado
+    - [ ] Criar componentes de navegação
+      - `<Sidebar>` com links: Dashboard, Contatos, Pipeline, Equipe
+      - `<UserMenu>` com dropdown: Perfil, Configurações, Logout
+  - [ ] **2.5.5 Integrar SDK Gerado**
+    - [ ] Criar `web/src/lib/api-client.ts`
+      - Importar SDK gerado (`@hey-api/openapi-ts`)
+      - Configurar baseURL: `http://localhost:3333`
+      - Criar interceptor para adicionar JWT:
+        - Ler token do localStorage
+        - Adicionar header `Authorization: Bearer ${token}`
+      - Criar interceptor para refresh token (futuro)
+      - Exportar client configurado
+    - [ ] Criar custom hooks para API
+      - `web/src/hooks/use-auth.ts` (login, register, logout)
+      - `web/src/hooks/use-contacts.ts` (CRUD de contatos)
+    - [ ] Configurar React Query
+      - `npm install @tanstack/react-query --workspace=web`
+      - Criar `QueryClientProvider` no root
+      - Configurar cache e retry
+  - [ ] **2.5.6 Página de Login**
+    - Criar `web/src/pages/login.tsx`
+    - Form com email e senha
+    - Validação com React Hook Form + Zod
+    - Chamar API via SDK
+    - Armazenar token no localStorage
+    - Redirecionar para dashboard
+  - [ ] **2.5.7 Proteção de Rotas**
+    - Criar `<ProtectedRoute>` component
+    - Verificar se token existe
+    - Redirecionar para login se não autenticado
+    - Aplicar em todas as rotas internas
 - [ ] 💾 **COMMIT:** `feat(web): setup ui and command palette navigation`
-- [ ] **2.6 Frontend: Data Grid**
-  - Tabela de Contatos Server-side.
+- [ ] **2.6 Frontend: Data Grid de Contatos**
+  - [ ] **2.6.1 Instalar TanStack Table**
+    - `npm install @tanstack/react-table --workspace=web`
+    - Instalar componentes Shadcn: `npx shadcn@latest add table`
+  - [ ] **2.6.2 Criar Página de Contatos**
+    - [ ] Criar `web/src/pages/contacts/contacts-list.tsx`
+      - Usar `useContacts()` hook para buscar dados
+      - Implementar paginação server-side
+      - Implementar busca/filtros
+      - Implementar ordenação por coluna
+    - [ ] Criar componente `<ContactsTable>`
+      - Configurar colunas: Nome, Email, Empresa, Telefone, Dono, Data criação
+      - Ações: Editar, Deletar
+      - Row selection (checkbox)
+      - Bulk actions: Deletar selecionados
+    - [ ] Criar componente `<ContactsFilters>`
+      - Input de busca (nome/email)
+      - Select de empresa
+      - Select de vendedor (apenas para admin/owner)
+    - [ ] Criar botão "Novo Contato"
+      - Abre dialog com formulário
+      - Submit via API
+      - Revalida lista após criar
+  - [ ] **2.6.3 Criar Formulário de Contato**
+    - [ ] Criar `web/src/components/contact-form.tsx`
+      - Campos: Nome, Email, Telefone, Empresa, Cargo
+      - Validação com Zod
+      - Submit com React Hook Form
+      - Loading state
+      - Error handling
+    - [ ] Integrar em Dialog
+      - Reutilizar para Create e Edit
+      - Preencher valores no modo Edit
+  - [ ] **2.6.4 Implementar Ações na Tabela**
+    - [ ] Editar contato
+      - Abrir dialog preenchido
+      - PATCH via API
+      - Revalidar lista
+    - [ ] Deletar contato
+      - Confirmação com AlertDialog
+      - DELETE via API
+      - Remover da lista (optimistic update)
+    - [ ] Bulk delete
+      - Confirmar múltipla seleção
+      - Deletar em batch
+  - [ ] **2.6.5 Implementar Paginação**
+    - Criar componente `<Pagination>`
+    - Controles: Previous, Next, Page numbers
+    - Mostrar total de registros
+    - Sincronizar com query params da URL
+  - [ ] **2.6.6 Testes E2E Frontend (Playwright)**
+    - [ ] Configurar Playwright
+      - `npm create playwright@latest --workspace=web`
+      - Configurar browsers: chromium, firefox
+    - [ ] Criar `web/tests/contacts.spec.ts`
+      - Teste: Listar contatos
+      - Teste: Criar novo contato
+      - Teste: Editar contato existente
+      - Teste: Deletar contato
+      - Teste: Filtrar por busca
+      - Teste: Paginação funciona
 - [ ] 💾 **COMMIT:** `feat(web): contacts data grid`
 - [ ] 🏷️ **TAG:** `git tag -a v0.3.0 -m "Milestone 2: Contacts & UX"`
 
@@ -241,21 +655,135 @@
 
 **Objetivo:** Colaboração síncrona e Uploads.
 
-- [ ] **3.1 � Atualizar Diagrama de Classes**
-  - Adicionar entidades `Deal`, `Pipeline`, `Attachment`.
-  - Mapear relacionamentos com `Contact` e `Storage`.
+- [ ] **3.1 📊 Atualizar Diagrama de Classes**
+  - [ ] **3.1.1 Modelar Entidade Deal**
+    - Adicionar classe `Deal` no diagrama
+    - Atributos: id, tenantId, contactId, title, value, stage, probability, expectedCloseDate, ownerId, createdAt, updatedAt, deletedAt
+    - Relacionamentos: `Deal` N:1 `Contact`, `Deal` N:1 `User` (owner)
+  - [ ] **3.1.2 Modelar Entidade PipelineStage**
+    - Atributos: id, tenantId, name, order, probability
+    - Enum stages: LEAD, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST
+  - [ ] **3.1.3 Modelar Entidade Attachment**
+    - Atributos: id, entityType, entityId, fileName, fileSize, mimeType, s3Key, uploadedBy, uploadedAt
+    - Relacionamento polimórfico (Deal, Contact, Lead)
 - [ ] 💾 **COMMIT:** `docs: update class diagram with pipeline module`
-- [ ] **3.2 �📐 Storage Module**
-  - Presigned URLs para S3/MinIO.
-  - Validação de segurança (MIME/Size).
+- [ ] **3.2 ☁️ Storage Module (S3/MinIO)**
+  - [ ] **3.2.1 Configurar MinIO no Docker Compose**
+    - Adicionar serviço MinIO no `docker-compose.yml`
+    - Configurar buckets padrão
+    - Variáveis: `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`
+  - [ ] **3.2.2 Instalar AWS SDK**
+    - `npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner --workspace=server`
+  - [ ] **3.2.3 Criar StorageModule**
+    - [ ] Criar `server/src/storage/storage.module.ts`
+    - [ ] Criar `server/src/storage/storage.service.ts`:
+      - Configurar S3Client do AWS SDK
+      - Método `generatePresignedUploadUrl(fileName, mimeType, maxSize)`:
+        - Validar MIME type (whitelist: images, PDFs, docs)
+        - Validar tamanho máximo (ex: 10MB)
+        - Gerar chave S3 única: `tenant-id/deals/uuid-filename`
+        - Gerar URL assinada (válida por 15 minutos)
+        - Retornar: `{ uploadUrl, key, expiresIn }`
+      - Método `generatePresignedDownloadUrl(key, expiresIn)`:
+        - Validar que arquivo existe
+        - Gerar URL de download assinada
+        - Retornar URL válida por tempo limitado
+      - Método `deleteFile(key)`:
+        - Remover arquivo do S3
+  - [ ] **3.2.4 Criar Testes TDD**
+    - Mockar S3Client
+    - Teste: Gera URL de upload válida
+    - Teste: Rejeita MIME type inválido
+    - Teste: Rejeita arquivo muito grande
+    - Teste: Gera URL de download
+  - [ ] **3.2.5 Criar StorageController**
+    - `POST /storage/upload-url` → Retorna presigned URL
+    - `GET /storage/download-url/:key` → Retorna download URL
+    - Aplicar `@UseGuards(JwtAuthGuard)`
+  - [ ] **3.2.6 Criar Schema Attachment no Prisma**
+    - Adicionar model `Attachment`
+    - Migration
 - [ ] 💾 **COMMIT:** `feat: secure storage module`
-- [ ] **3.3 Backend: WebSockets**
-  - `EventsGateway` (Socket.io).
-  - Evento `deal.moved`.
+- [ ] **3.3 Backend: WebSockets (Real-time)**
+  - [ ] **3.3.1 Instalar Socket.io**
+    - `npm install @nestjs/websockets @nestjs/platform-socket.io socket.io --workspace=server`
+  - [ ] **3.3.2 Criar EventsGateway**
+    - [ ] Criar `server/src/events/events.gateway.ts`
+      - `@WebSocketGateway()` com CORS configurado
+      - Implementar `OnGatewayConnection`, `OnGatewayDisconnect`
+      - Autenticar conexão via JWT:
+        - Extrair token de `socket.handshake.auth.token`
+        - Validar JWT
+        - Armazenar `userId` e `tenantId` em `socket.data`
+      - Criar sala por tenant: `socket.join(tenantId)`
+    - [ ] Evento `deal.moved`:
+      - Listener: `@SubscribeMessage('deal.moved')`
+      - Payload: `{ dealId, fromStage, toStage, userId }`
+      - Validar que usuário pode mover o deal
+      - Atualizar deal no banco
+      - Emitir para todos no tenant: `server.to(tenantId).emit('deal.updated', payload)`
+    - [ ] Evento `deal.created`:
+      - Broadcast criação de novo deal
+    - [ ] Evento `deal.deleted`:
+      - Broadcast remoção de deal
+  - [ ] **3.3.3 Criar Testes E2E de WebSocket**
+    - Configurar cliente Socket.io no teste
+    - Teste: Conexão com JWT válido
+    - Teste: Rejeita conexão sem JWT
+    - Teste: Recebe evento ao mover deal
+    - Teste: Isolamento por tenant (tenant A não vê eventos do B)
 - [ ] 💾 **COMMIT:** `feat: websocket gateway`
-- [ ] **3.4 Frontend: Kanban & Upload**
-  - `dnd-kit` + Optimistic Updates.
-  - Upload direto para S3.
+- [ ] **3.4 Frontend: Kanban Board**
+  - [ ] **3.4.1 Instalar Dependências**
+    - `npm install @dnd-kit/core @dnd-kit/sortable socket.io-client --workspace=web`
+    - `npx shadcn@latest add card badge --workspace=web`
+  - [ ] **3.4.2 Criar Página Pipeline**
+    - [ ] Criar `web/src/pages/pipeline/pipeline.tsx`
+      - Layout de colunas (stages): LEAD, QUALIFICATION, PROPOSAL, etc.
+      - Listar deals em cada coluna
+      - Exibir: Título, Valor, Contato, Probabilidade
+  - [ ] **3.4.3 Implementar Drag & Drop**
+    - [ ] Configurar `DndContext` do @dnd-kit
+      - Callback `onDragEnd()`:
+        - Otimistic update (mover card visualmente)
+        - Emitir evento WebSocket `deal.moved`
+        - Rollback se falhar
+      - Sortable por coluna
+    - [ ] Criar componente `<DealCard>`
+      - Draggable com `useSortable()`
+      - Exibir informações do deal
+      - Botão de editar (abre dialog)
+  - [ ] **3.4.4 Integrar WebSocket no Frontend**
+    - [ ] Criar `web/src/hooks/use-socket.ts`
+      - Conectar ao servidor Socket.io
+      - Enviar JWT no handshake
+      - Listeners:
+        - `deal.updated` → Atualizar lista local
+        - `deal.created` → Adicionar à lista
+        - `deal.deleted` → Remover da lista
+      - Reconnection automática
+    - [ ] Usar hook na página Pipeline
+      - Sincronização real-time entre usuários
+  - [ ] **3.4.5 Implementar Upload de Anexos**
+    - [ ] Criar componente `<FileUpload>`
+      - Input de arquivo (drag & drop ou clique)
+      - Validar MIME e tamanho no frontend
+      - Preview de imagens
+    - [ ] Fluxo de upload:
+      1. Usuário seleciona arquivo
+      2. Frontend chama `POST /storage/upload-url`
+      3. Backend retorna presigned URL
+      4. Frontend faz PUT direto para S3/MinIO (sem passar pelo backend)
+      5. Frontend chama `POST /attachments` com S3 key
+      6. Backend salva registro no banco
+    - [ ] Exibir lista de anexos
+      - Download via presigned URL
+      - Deletar anexo
+  - [ ] **3.4.6 Testes E2E Frontend**
+    - Teste: Arrastar deal de uma coluna para outra
+    - Teste: Outro usuário vê atualização em tempo real
+    - Teste: Upload de anexo
+    - Teste: Download de anexo
 - [ ] 💾 **COMMIT:** `feat(web): kanban board with sync and uploads`
 - [ ] 🏷️ **TAG:** `git tag -a v0.4.0 -m "Milestone 3: Pipeline & Storage"`
 
@@ -266,14 +794,90 @@
 **Objetivo:** Filas para tarefas pesadas.
 
 - [ ] **4.1 📐 BullMQ Setup**
-  - Fila `mail-queue`.
+  - [ ] **4.1.1 Instalar Dependências**
+    - `npm install @nestjs/bullmq bullmq --workspace=server`
+    - Redis já está no Docker Compose (Milestone 0)
+  - [ ] **4.1.2 Configurar BullModule**
+    - [ ] Criar `server/src/queues/queues.module.ts`
+    - [ ] Importar `BullModule.forRoot()`:
+      - Configurar conexão Redis do `.env`
+      - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+    - [ ] Registrar fila `mail-queue`:
+      - `BullModule.registerQueue({ name: 'mail-queue' })`
+  - [ ] **4.1.3 Adicionar Variáveis de Ambiente**
+    - Adicionar no `server/.env`: `REDIS_HOST=localhost`, `REDIS_PORT=6379`
+    - Validar com Zod em `env.validation.ts`
 - [ ] 💾 **COMMIT:** `chore: setup bullmq`
 - [ ] **4.2 Workers & Invites**
-  - `MailProcessor` (Worker).
-  - `InviteMemberService` (Producer).
+  - [ ] **4.2.1 Criar Schema de Convite**
+    - [ ] Adicionar model `TeamInvite` no Prisma:
+      - id, tenantId, email, role, invitedBy, token, expiresAt, acceptedAt
+      - Status: PENDING, ACCEPTED, EXPIRED
+    - [ ] Migration
+  - [ ] **4.2.2 Criar MailProcessor (Worker)**
+    - [ ] Criar `server/src/queues/processors/mail.processor.ts`
+      - `@Processor('mail-queue')`
+      - Método `@Process('send-invite')`:
+        - Recebe payload: `{ email, inviteLink, inviterName }`
+        - Montar template HTML de email
+        - Enviar email via SMTP (Nodemailer) ou serviço (SendGrid, Resend)
+        - Logar sucesso/falha
+      - Retry automático (3 tentativas com backoff exponencial)
+  - [ ] **4.2.3 Configurar Nodemailer**
+    - `npm install nodemailer @types/nodemailer --workspace=server`
+    - Configurar transporter SMTP
+    - Variáveis `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+  - [ ] **4.2.4 Criar InviteMemberService (Producer)**
+    - [ ] Criar `server/src/team/team.service.ts`
+      - Injetar `@InjectQueue('mail-queue')`
+      - Método `inviteMember(email, role, invitedBy)`:
+        - Gerar token único (JWT ou UUID)
+        - Criar registro `TeamInvite` no banco
+        - Adicionar job na fila:
+          ```ts
+          await mailQueue.add('send-invite', {
+            email,
+            inviteLink: `https://app.com/accept-invite/${token}`,
+            inviterName: invitedBy.name,
+          });
+          ```
+        - Retornar sucesso
+  - [ ] **4.2.5 Criar TeamController**
+    - `POST /team/invite` → Adiciona convite na fila
+    - `POST /team/accept/:token` → Aceita convite (cria usuário)
+    - `GET /team/invites` → Lista convites pendentes
+  - [ ] **4.2.6 Testes TDD**
+    - Mockar BullMQ Queue
+    - Teste: Criar convite adiciona job na fila
+    - Teste: Worker envia email (mockar Nodemailer)
+    - Teste: Retry em caso de falha
+  - [ ] **4.2.7 Dashboard BullMQ (Opcional)**
+    - Instalar `@bull-board/nestjs`
+    - Configurar em `/admin/queues`
+    - Visualizar jobs: pending, completed, failed
 - [ ] 💾 **COMMIT:** `feat: mail processor and invite logic`
 - [ ] **4.3 Frontend: Team UI**
-  - Modal de convite de membros.
+  - [ ] **4.3.1 Criar Página de Equipe**
+    - [ ] Criar `web/src/pages/team/team.tsx`
+      - Listar membros do time (com roles)
+      - Listar convites pendentes
+      - Botão "Convidar Membro"
+  - [ ] **4.3.2 Modal de Convite**
+    - [ ] Criar componente `<InviteMemberDialog>`
+      - Form: Email, Role (select)
+      - Submit: POST `/team/invite`
+      - Loading state
+      - Sucesso: Fechar modal + toast
+  - [ ] **4.3.3 Página de Aceitar Convite**
+    - [ ] Criar `web/src/pages/accept-invite/:token.tsx`
+      - Exibir informações do convite
+      - Form: Criar senha
+      - Submit: POST `/team/accept/:token`
+      - Redirecionar para dashboard
+  - [ ] **4.3.4 Testes E2E**
+    - Teste: Convidar membro
+    - Teste: Email recebido (mock)
+    - Teste: Aceitar convite
 - [ ] 💾 **COMMIT:** `feat(web): team management ui`
 - [ ] 🏷️ **TAG:** `git tag -a v0.4.5 -m "Milestone 4: Async Teams"`
 
@@ -283,15 +887,103 @@
 
 **Objetivo:** Qualidade final e Dashboards.
 
-- [ ] **5.1 Backend: Dashboard**
-  - Agregações com Prisma (Group By).
+- [ ] **5.1 Backend: Dashboard (Agregações)**
+  - [ ] **5.1.1 Criar DashboardService**
+    - [ ] Criar `server/src/dashboard/dashboard.service.ts`
+      - Método `getMetrics(userId, tenantId, dateRange)`:
+        - Total de contatos (filtrado por tenant)
+        - Total de deals
+        - Taxa de conversão (deals won / total deals)
+        - Valor total em pipeline
+        - Deals por stage (count)
+      - Método `getDealsOverTime(tenantId, dateRange)`:
+        - Agrupar deals por data de criação
+        - Retornar série temporal: `{ date, count, totalValue }`
+      - Método `getTopPerformers(tenantId, dateRange)`:
+        - Agrupar deals por ownerId
+        - Somar valores won
+        - Ordenar por valor total
+        - Retornar top 10
+      - Método `getConversionFunnel(tenantId)`:
+        - Contar deals em cada stage
+        - Calcular % de conversão entre stages
+  - [ ] **5.1.2 Usar Agregações do Prisma**
+    - Exemplo: `prisma.deal.groupBy({ by: ['stage'], _count: true, _sum: { value: true } })`
+    - Otimizar queries (evitar N+1)
+    - Adicionar indexes no Prisma
+  - [ ] **5.1.3 Criar DashboardController**
+    - `GET /dashboard/metrics` → Retorna KPIs
+    - `GET /dashboard/deals-over-time` → Série temporal
+    - `GET /dashboard/top-performers` → Ranking
+    - `GET /dashboard/funnel` → Funil de conversão
+    - Aplicar `@UseGuards(JwtAuthGuard)`
+    - Cache com Redis (15 minutos)
+  - [ ] **5.1.4 Testes TDD**
+    - Mockar Prisma
+    - Teste: Calcula métricas corretamente
+    - Teste: Filtra por tenant
+    - Teste: Respeita RBAC (member vê apenas seus dados)
 - [ ] 💾 **COMMIT:** `feat: dashboard aggregations`
-- [ ] **5.2 Frontend: Charts**
-  - Recharts.
+- [ ] **5.2 Frontend: Charts (Visualizações)**
+  - [ ] **5.2.1 Instalar Recharts**
+    - `npm install recharts --workspace=web`
+  - [ ] **5.2.2 Criar Página Dashboard**
+    - [ ] Criar `web/src/pages/dashboard/dashboard.tsx`
+      - Grid responsivo (4 colunas)
+      - Cards de KPIs: Total Contatos, Deals, Taxa Conversão, Valor Pipeline
+      - Gráfico de linha: Deals ao longo do tempo
+      - Gráfico de barras: Deals por stage
+      - Tabela: Top performers
+  - [ ] **5.2.3 Criar Componentes de Charts**
+    - [ ] `<MetricCard>`: Card com título, valor, variação (+/- %)
+    - [ ] `<LineChart>`: Recharts LineChart configurado
+    - [ ] `<BarChart>`: Recharts BarChart configurado
+    - [ ] `<FunnelChart>`: Visualização de funil customizada
+  - [ ] **5.2.4 Integrar API**
+    - Criar hook `use-dashboard.ts`
+    - Fetch de dados via SDK
+    - Loading skeletons
+    - Error handling
+  - [ ] **5.2.5 Filtros de Data**
+    - Componente `<DateRangePicker>`
+    - Opções: Hoje, 7 dias, 30 dias, 90 dias, Custom
+    - Refetch ao mudar filtro
 - [ ] 💾 **COMMIT:** `feat(web): analytics dashboard`
-- [ ] **5.3 🧪 Testes E2E (Playwright)**
-  - `auth.spec.ts` (Login).
-  - `crm.spec.ts` (Fluxo completo).
+- [ ] **5.3 🧪 Testes E2E Completos (Playwright)**
+  - [ ] **5.3.1 Configurar Playwright no Backend**
+    - Criar `server/test/e2e/setup.ts`
+    - Configurar banco de testes (separado)
+    - Seed de dados de teste
+  - [ ] **5.3.2 Criar Testes de Autenticação**
+    - [ ] `server/test/e2e/auth.e2e.spec.ts`
+      - Teste: Registro de usuário
+      - Teste: Login com credenciais corretas
+      - Teste: Login com credenciais erradas → 401
+      - Teste: Acesso a rota protegida sem token → 401
+      - Teste: Acesso a rota protegida com token → 200
+  - [ ] **5.3.3 Criar Testes de Fluxo Completo**
+    - [ ] `server/test/e2e/crm.e2e.spec.ts`
+      - Cenário: Criar lead → Qualificar → Criar contact → Criar deal → Mover pipeline → Fechar negócio
+      - Validar cada etapa
+      - Validar audit logs criados
+  - [ ] **5.3.4 Criar Testes de RBAC**
+    - [ ] `server/test/e2e/rbac.e2e.spec.ts`
+      - Teste: Member não acessa lead de outro → 403
+      - Teste: Admin acessa todos leads → 200
+      - Teste: Owner pode deletar qualquer recurso
+  - [ ] **5.3.5 Configurar Playwright no Frontend**
+    - Testes já iniciados no Milestone 2
+    - Expandir cobertura
+  - [ ] **5.3.6 Criar Testes de Jornada do Usuário**
+    - [ ] `web/tests/user-journey.spec.ts`
+      - Login → Dashboard → Ver métricas
+      - Criar contato → Criar deal → Mover kanban
+      - Upload de anexo
+      - Convidar membro
+  - [ ] **5.3.7 Configurar CI para E2E**
+    - Rodar testes em headless mode
+    - Gerar relatórios HTML
+    - Armazenar screenshots de falhas
 - [ ] 💾 **COMMIT:** `test: playwright e2e scenarios`
 - [ ] 🏷️ **TAG:** `git tag -a v0.5.0 -m "Milestone 5: Dashboard & QA"`
 
@@ -302,13 +994,85 @@
 **Objetivo:** Auditoria e Proteção.
 
 - [ ] **6.1 🛡️ Security Gates**
-  - Implementar `ThrottlerModule` (Rate Limiting).
-  - Configurar CORS restrito (Whitelist).
+  - [ ] **6.1.1 Implementar Rate Limiting**
+    - [ ] Instalar ThrottlerModule
+      - `npm install @nestjs/throttler --workspace=server`
+    - [ ] Configurar globalmente:
+      - Limite: 100 requests / 1 minuto (padrão)
+      - Login: 5 tentativas / 15 minutos
+      - API endpoints: 300 requests / 1 minuto
+    - [ ] Aplicar throttler customizado no `AuthController`:
+      - `@Throttle({ default: { limit: 5, ttl: 900000 } })` no login
+    - [ ] Storage: Redis para controle distribuído
+  - [ ] **6.1.2 Configurar CORS Restrito**
+    - [ ] Whitelist de origens permitidas
+      - Ambiente dev: `http://localhost:5173`
+      - Ambiente prod: `https://app.orbitcrm.com`
+    - [ ] Configurar no `main.ts`:
+      - `credentials: true`
+      - `methods: ['GET', 'POST', 'PATCH', 'DELETE']`
+      - `allowedHeaders: ['Content-Type', 'Authorization']`
+  - [ ] **6.1.3 Implementar Content Security Policy**
+    - Atualizar configuração do Helmet
+    - Adicionar diretivas específicas
+    - Bloquear inline scripts (XSS)
+  - [ ] **6.1.4 Adicionar Request ID e Logging**
+    - Middleware para gerar UUID por request
+    - Incluir em todos os logs
+    - Retornar no header `X-Request-ID`
 - [ ] **6.2 🛡️ Pentest Simulado (TDD)**
-  - Criar teste que tenta acessar rota de Admin com token de Vendedor.
-  - Criar teste que tenta Upload de arquivo malicioso.
-- [ ] **6.3 🛡️ Supply Chain**
-  - Rodar `npm audit` e corrigir vulnerabilidades.
+  - [ ] **6.2.1 Teste: Escalação de Privilégio**
+    - [ ] `server/test/security/privilege-escalation.spec.ts`
+      - Criar usuário MEMBER
+      - Tentar acessar rota admin: `GET /admin/users` → 403
+      - Tentar modificar próprio role via PATCH → 403
+      - Validar que não consegue executar ações de admin
+  - [ ] **6.2.2 Teste: SQL Injection**
+    - Tentar injetar SQL em parâmetros de busca
+    - Exemplo: `GET /contacts?search='; DROP TABLE users--`
+    - Validar que Prisma sanitiza automaticamente
+  - [ ] **6.2.3 Teste: Upload de Arquivo Malicioso**
+    - [ ] `server/test/security/file-upload.spec.ts`
+      - Tentar upload de arquivo .exe → 400
+      - Tentar upload de arquivo com MIME type falso → 400
+      - Tentar upload de arquivo > tamanho máximo → 413
+      - Tentar upload de script PHP disfarçado de imagem → 400
+  - [ ] **6.2.4 Teste: JWT Token Manipulation**
+    - Criar token com payload modificado (role alterado)
+    - Tentar acessar API → 401
+    - Tentar usar token expirado → 401
+    - Tentar usar token de outro tenant → 403
+  - [ ] **6.2.5 Teste: Bypass de Multi-tenancy**
+    - Criar 2 tenants
+    - Usuário do tenant A tenta acessar contato do tenant B → 404 (não 403 para não vazar existência)
+    - Validar isolamento total
+  - [ ] **6.2.6 Teste: CORS Bypass**
+    - Tentar request de origem não permitida → CORS error
+    - Validar headers CORS apenas para origens whitelisted
+  - [ ] **6.2.7 Teste: Rate Limiting Bypass**
+    - Enviar 100 requests em 10 segundos
+    - Validar que > 100 retorna 429 (Too Many Requests)
+- [ ] **6.3 🛡️ Supply Chain Security**
+  - [ ] **6.3.1 Audit de Dependências**
+    - Executar `npm audit` na raiz e em cada workspace
+    - Corrigir vulnerabilidades HIGH e CRITICAL
+    - Documentar vulnerabilidades LOW aceitáveis
+  - [ ] **6.3.2 Atualizar Dependências**
+    - `npm outdated` para listar pacotes desatualizados
+    - Atualizar patch versions automaticamente
+    - Testar antes de atualizar minor/major
+  - [ ] **6.3.3 Configurar Dependabot (GitHub)**
+    - Criar `.github/dependabot.yml`
+    - Configurar alerts automáticos
+    - PRs automáticos para security updates
+  - [ ] **6.3.4 Adicionar License Checker**
+    - `npm install --save-dev license-checker`
+    - Script para validar licenças permitidas
+    - Bloquear licenças GPL em produção (se aplicável)
+  - [ ] **6.3.5 Configurar .npmrc**
+    - Habilitar `package-lock=true`
+    - Desabilitar `save-exact=false`
+    - Configurar registry seguro
 - [ ] 💾 **COMMIT:** `chore: apply security hardening`
 - [ ] 🏷️ **TAG:** `git tag -a v0.6.0 -m "Milestone 6: Security Hardening"`
 
@@ -319,12 +1083,97 @@
 **Objetivo:** Deploy profissional com separação de cargas.
 
 - [ ] **7.1 Arquitetura de Processos (NestJS Standalone)**
-  - Criar entrypoint separado `src/worker.ts` (apenas carrega o módulo de filas, sem servidor HTTP).
-- [ ] **7.2 Manifestos K8s (Workloads)**
-  - `k8s/deployment-api.yaml`: Réplicas > 1.
-  - `k8s/deployment-worker.yaml`: Consumidor de filas dedicado.
-  - `k8s/statefulset-minio.yaml`: Storage para Staging.
-  - `k8s/service.yaml` e `k8s/ingress.yaml`.
+  - [ ] **7.1.1 Criar Worker Standalone**
+    - [ ] Criar `server/src/worker.ts`
+      - Importar apenas `QueuesModule` e `PrismaModule`
+      - NÃO inicializar servidor HTTP (sem Fastify)
+      - Apenas processar jobs do BullMQ
+      - Graceful shutdown em SIGTERM
+    - [ ] Adicionar script no `package.json`:
+      - `"start:worker": "node dist/worker.js"`
+  - [ ] **7.1.2 Separar Concerns**
+    - API: Processa requests HTTP (stateless)
+    - Worker: Processa filas (pode ser scaled independentemente)
+    - Benefício: Escalar API e Workers de forma diferente
+- [ ] **7.2 Manifestos Kubernetes**
+  - [ ] **7.2.1 Criar Namespace**
+    - [ ] Criar `k8s/namespace.yaml`
+      - Namespace: `orbit-crm-prod`
+      - Namespace: `orbit-crm-staging`
+  - [ ] **7.2.2 ConfigMap e Secrets**
+    - [ ] Criar `k8s/configmap.yaml`
+      - Variáveis não-sensíveis: `NODE_ENV`, `PORT`, `DATABASE_URL` (sem senha)
+    - [ ] Criar `k8s/secrets.yaml` (não versionar!)
+      - Variáveis sensíveis: `JWT_SECRET`, `DATABASE_PASSWORD`, `SMTP_PASSWORD`
+      - Usar `kubectl create secret` em vez de YAML
+  - [ ] **7.2.3 Deployment API**
+    - [ ] Criar `k8s/deployment-api.yaml`
+      - Replicas: 3 (alta disponibilidade)
+      - Container: `orbit-crm-api:latest`
+      - Command: `npm run start:prod`
+      - Resources:
+        - Requests: CPU 200m, Memory 256Mi
+        - Limits: CPU 500m, Memory 512Mi
+      - Probes:
+        - Liveness: `GET /health` every 30s
+        - Readiness: `GET /health/ready` every 10s
+      - EnvFrom: ConfigMap + Secrets
+  - [ ] **7.2.4 Deployment Worker**
+    - [ ] Criar `k8s/deployment-worker.yaml`
+      - Replicas: 2 (processar filas)
+      - Container: `orbit-crm-api:latest`
+      - Command: `npm run start:worker`
+      - Resources:
+        - Requests: CPU 100m, Memory 128Mi
+        - Limits: CPU 300m, Memory 256Mi
+      - EnvFrom: ConfigMap + Secrets
+  - [ ] **7.2.5 StatefulSet PostgreSQL**
+    - [ ] Criar `k8s/statefulset-postgres.yaml`
+      - Replicas: 1 (ou 3 para HA com replicação)
+      - PersistentVolumeClaim: 10Gi
+      - Image: `postgres:17.2-alpine`
+  - [ ] **7.2.6 StatefulSet Redis**
+    - [ ] Criar `k8s/statefulset-redis.yaml`
+      - Replicas: 1 (ou Redis Cluster)
+      - Image: `redis:7-alpine`
+  - [ ] **7.2.7 StatefulSet MinIO**
+    - [ ] Criar `k8s/statefulset-minio.yaml`
+      - Replicas: 1
+      - PersistentVolumeClaim: 50Gi
+      - Image: `minio/minio:latest`
+  - [ ] **7.2.8 Services**
+    - [ ] Criar `k8s/service-api.yaml`
+      - Type: ClusterIP
+      - Port: 3333
+      - Selector: `app=orbit-crm-api`
+    - [ ] Criar `k8s/service-postgres.yaml`
+      - Type: ClusterIP
+      - Port: 5432
+    - [ ] Criar `k8s/service-redis.yaml`
+      - Type: ClusterIP
+      - Port: 6379
+    - [ ] Criar `k8s/service-minio.yaml`
+      - Type: ClusterIP
+      - Port: 9000 (API), 9001 (Console)
+  - [ ] **7.2.9 Ingress**
+    - [ ] Criar `k8s/ingress.yaml`
+      - Host: `api.orbitcrm.com`
+      - TLS: Cert-manager (Let's Encrypt)
+      - Backend: service-api:3333
+      - Annotations: NGINX Ingress, rate limiting
+  - [ ] **7.2.10 HorizontalPodAutoscaler**
+    - [ ] Criar `k8s/hpa-api.yaml`
+      - Min replicas: 2
+      - Max replicas: 10
+      - Target CPU: 70%
+      - Scale up/down baseado em métricas
+  - [ ] **7.2.11 Criar Scripts de Deploy**
+    - [ ] `k8s/deploy-staging.sh`
+      - Apply todos manifestos no namespace staging
+      - Wait for rollout
+    - [ ] `k8s/deploy-prod.sh`
+      - Apply com validação
+      - Blue-green deployment (zero downtime)
 - [ ] 💾 **COMMIT:** `ops: add k8s manifests with api and worker separation`
 - [ ] 🏷️ **TAG:** `git tag -a v0.7.0 -m "Milestone 7: Kubernetes Orchestration"`
 
@@ -335,13 +1184,114 @@
 **Objetivo:** Automação Final e Monitoramento.
 
 - [ ] **8.1 Pipeline CI/CD (GitHub Actions)**
-  - Workflow `.github/workflows/ci.yml`.
-  - Jobs: Install -> Lint -> Test (Unit) -> E2E (Playwright Headless) -> Build Docker.
+  - [ ] **8.1.1 Criar Workflow de CI**
+    - [ ] Criar `.github/workflows/ci.yml`
+      - Trigger: push em `main`, `develop` e PRs
+      - Jobs:
+        1. **Install**: Cache node_modules, install dependencies
+        2. **Lint**: Rodar ESLint em server e web
+        3. **Type Check**: `tsc --noEmit`
+        4. **Test Unit**: Vitest com coverage
+        5. **Test E2E Backend**: Testes E2E do NestJS
+        6. **Test E2E Frontend**: Playwright headless
+        7. **Build**: Compilar TypeScript
+      - Matrix strategy: Node 24.x, 22.x
+      - Upload coverage para Codecov
+  - [ ] **8.1.2 Criar Workflow de CD**
+    - [ ] Criar `.github/workflows/cd.yml`
+      - Trigger: Tag `v*.*.*`
+      - Jobs:
+        1. **Build Docker Images**:
+           - API: `orbit-crm-api:${{ github.ref_name }}`
+           - Worker: `orbit-crm-worker:${{ github.ref_name }}`
+           - Frontend: `orbit-crm-web:${{ github.ref_name }}`
+        2. **Push to Registry**: Docker Hub ou GHCR
+        3. **Deploy to Staging**:
+           - Kubectl apply no cluster staging
+           - Wait for rollout
+           - Run smoke tests
+        4. **Deploy to Production** (manual approval):
+           - Blue-green deployment
+           - Health checks
+           - Rollback automático se falhar
+  - [ ] **8.1.3 Configurar Secrets no GitHub**
+    - `DOCKER_USERNAME`, `DOCKER_PASSWORD`
+    - `KUBECONFIG` (base64 encoded)
+    - `CODECOV_TOKEN`
 - [ ] **8.2 Docker Builds Otimizados**
-  - Ajustar `Dockerfile` para Multi-stage build (Target: API vs Worker).
-- [ ] **8.3 Observabilidade Básica**
-  - Endpoint `/health` retornando status do Redis e DB.
+  - [ ] **8.2.1 Criar Dockerfile Multi-stage**
+    - [ ] Criar `server/Dockerfile`
+      - Stage 1 (base): Node Alpine, install dependencies
+      - Stage 2 (build): Compilar TypeScript
+      - Stage 3 (production-api): Copiar apenas dist + node_modules de produção
+      - Stage 4 (production-worker): Mesmo que API, mas CMD diferente
+      - Usar BuildKit cache mounts
+      - Tamanho final: < 200MB
+  - [ ] **8.2.2 Criar Dockerfile Frontend**
+    - [ ] Criar `web/Dockerfile`
+      - Stage 1: Build (Vite)
+      - Stage 2: NGINX Alpine para servir estáticos
+      - Tamanho final: < 50MB
+  - [ ] **8.2.3 Criar .dockerignore**
+    - Ignorar: node_modules, dist, .git, .env, coverage
+  - [ ] **8.2.4 Configurar Docker Compose Produção**
+    - `docker-compose.prod.yml` com imagens buildadas
+    - Healthchecks configurados
+- [ ] **8.3 Observabilidade Completa**
+  - [ ] **8.3.1 Implementar Health Checks**
+    - [ ] Criar `server/src/health/health.controller.ts`
+      - `GET /health` → Liveness probe:
+        - Retorna 200 se app está rodando
+      - `GET /health/ready` → Readiness probe:
+        - Verifica conexão com PostgreSQL
+        - Verifica conexão com Redis
+        - Verifica conexão com MinIO
+        - Retorna 200 se tudo OK, 503 caso contrário
+      - `GET /health/metrics` → Prometheus metrics:
+        - Request count
+        - Response time
+        - Active connections
+  - [ ] **8.3.2 Configurar Prometheus**
+    - Instalar `@willsoto/nestjs-prometheus`
+    - Expor métricas em `/metrics`
+    - Configurar Prometheus server no K8s
+  - [ ] **8.3.3 Configurar Grafana**
+    - Deploy Grafana no K8s
+    - Dashboards:
+      - Requests por segundo
+      - Latência P50, P95, P99
+      - Taxa de erro
+      - Uso de memória/CPU
+      - Queue jobs (pending, completed, failed)
+  - [ ] **8.3.4 Configurar Alertas**
+    - Alertmanager do Prometheus
+    - Alerts:
+      - Error rate > 5% → Slack/Email
+      - Latência P95 > 1s → Slack/Email
+      - Queue com > 1000 jobs pending → Slack
+      - Pod restart loop → PagerDuty
+  - [ ] **8.3.5 Distributed Tracing (Opcional)**
+    - Jaeger ou OpenTelemetry
+    - Rastrear requests entre serviços
+    - Visualizar latência de cada operação
 - [ ] 💾 **COMMIT:** `ci: setup github actions pipeline`
 - [ ] 🏷️ **TAG:** `git tag -a v1.0.0 -m "Release 1.0: Enterprise Gold"`
+
+---
+
+## 💡 Features Futuras (Backlog)
+
+- [ ] **Aniversários Automáticos**
+  - Cron job diário que verifica aniversários de contatos
+  - Envia email/SMS personalizado automaticamente
+  - Template customizável por tenant
+  - Dashboard de aniversários do mês
+
+- [ ] **Envio de Brindes via Dropshipping**
+  - Integração com API de dropshipping (ex: Printful, Giftbit)
+  - Catálogo de brindes: canecas, camisetas, vouchers
+  - Botão "Enviar Brinde" no perfil do contato
+  - Workflow: Seleção → Personalização → Pagamento → Envio → Tracking
+  - Audit log de brindes enviados
 
 pode ser interessante uma feature onde o usuario clica e envia um feliz aniversario direto para o cliente, e tambem pode ser interessante no futuro ter um botao de enviar um mimo via dropshiping
