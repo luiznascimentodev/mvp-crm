@@ -45,11 +45,11 @@
   - Criar pasta `/server` (`nest new server`).
   - Criar pasta `/web` (`npm create vite@latest web`).
 - [x] 💾 **COMMIT:** `chore: init monorepo structure with npm workspaces`
-- [ ] **0.2 Tooling & Linting**
+- [x] **0.2 Tooling & Linting**
   - Configurar ESLint 9 (Flat Config) na raiz.
   - Configurar Prettier e `.editorconfig`.
   - Configurar Husky e Commitlint.
-- [ ] 💾 **COMMIT:** `chore: configure strict eslint, prettier and husky`
+- [x] 💾 **COMMIT:** `chore: configure strict eslint, prettier and husky`
 - [ ] **0.2.1 📊 Diagrama de Casos de Uso**
   - Mapear funcionalidades principais (Auth, Contacts, Pipeline, Teams).
   - Definir atores (Admin, Manager, Seller).
