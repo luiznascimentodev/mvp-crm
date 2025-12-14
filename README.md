@@ -173,8 +173,8 @@ O projeto está sendo construído em **milestones incrementais** para garantir e
 
 ### Milestone 0: Fundação (Em Progresso)
 
-- [x] Setup do monorepo com workspaces
-- [x] Configuração de ESLint 9 (Flat Config) + Prettier
+- [ ] Setup do monorepo com workspaces
+- [ ] Configuração de ESLint 9 (Flat Config) + Prettier
 - [ ] Dockerização da infraestrutura (PostgreSQL, Redis, MinIO)
 - [ ] Configuração do Fastify + Helmet
 - [ ] Testes de Health Check com Vitest

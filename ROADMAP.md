@@ -50,6 +50,11 @@
   - Configurar Prettier e `.editorconfig`.
   - Configurar Husky e Commitlint.
 - [ ] 💾 **COMMIT:** `chore: configure strict eslint, prettier and husky`
+- [ ] **0.2.1 📊 Diagrama de Casos de Uso**
+  - Mapear funcionalidades principais (Auth, Contacts, Pipeline, Teams).
+  - Definir atores (Admin, Manager, Seller).
+  - Criar diagrama UML (PlantUML ou Mermaid).
+- [ ] 💾 **COMMIT:** `docs: add use case diagram`
 - [ ] **0.3 🛡️ Hardening & Config**
   - Configurar `ConfigModule` com validação **Zod**.
   - Configurar `FastifyAdapter` e `helmet`.
@@ -70,19 +75,24 @@
 
 **Objetivo:** Auth segura e integração Front-Back automatizada.
 
-- [ ] **1.1 📐 Modelagem de Domínio (Prisma)**
+- [ ] **1.1 � Diagrama de Classes (Domínio Core)**
+  - Modelar entidades: `User`, `Team`, `Role`, relacionamentos.
+  - Definir atributos e multiplicidades.
+  - Criar diagrama UML (PlantUML ou Mermaid).
+- [ ] 💾 **COMMIT:** `docs: add core domain class diagram`
+- [ ] **1.2 �📐 Modelagem de Domínio (Prisma)**
   - Schema: `User`, `Team`, `Role`.
   - Migration Dev.
 - [ ] 💾 **COMMIT:** `feat: add user, team and role prisma schema`
-- [ ] **1.2 TDD: Auth Service (Lógica)**
+- [ ] **1.3 TDD: Auth Service (Lógica)**
   - `AuthService`: Register com Argon2.
   - `JwtStrategy`: Passport JWT.
 - [ ] 💾 **COMMIT:** `feat: implement secure auth logic with argon2`
-- [ ] **1.3 🛡️ Guards (RBAC)**
+- [ ] **1.4 🛡️ Guards (RBAC)**
   - Decorator `@Roles()`.
   - `RolesGuard` e `TeamsGuard`.
 - [ ] 💾 **COMMIT:** `feat: add rbac guards`
-- [ ] **1.4 📚 Docs & SDK Generation**
+- [ ] **1.5 📚 Docs & SDK Generation**
   - Configurar Swagger no Backend.
   - Configurar `@hey-api/openapi-ts` no Frontend.
   - Script `npm run generate:sdk` que lê o Swagger e cria o cliente TypeScript.
@@ -95,19 +105,23 @@
 
 **Objetivo:** CRUD, Dados Fakes e Interface.
 
-- [ ] **2.1 📐 Auditoria (AOP)**
+- [ ] **2.1 � Atualizar Diagrama de Classes**
+  - Adicionar entidade `Contact` e `AuditLog`.
+  - Atualizar relacionamentos com `Team` e `User`.
+- [ ] 💾 **COMMIT:** `docs: update class diagram with contacts module`
+- [ ] **2.2 📐 Auditoria (AOP)**
   - `AuditInterceptor` para logar mutações.
 - [ ] 💾 **COMMIT:** `feat: implement audit log interceptor`
-- [ ] **2.2 Backend: Contacts Module (TDD)**
+- [ ] **2.3 Backend: Contacts Module (TDD)**
   - CRUD com isolamento por Time.
   - **Database Seeding:** Criar script `prisma/seed.ts` (Faker.js) para popular banco.
 - [ ] 💾 **COMMIT:** `feat: contacts crud and database seeder`
-- [ ] **2.3 Frontend: Setup & Navigation**
+- [ ] **2.4 Frontend: Setup & Navigation**
   - Shadcn/UI, Tailwind v4.
   - Componente `CmdkDialog` (Command Palette).
   - Integrar API usando o SDK gerado.
 - [ ] 💾 **COMMIT:** `feat(web): setup ui and command palette navigation`
-- [ ] **2.4 Frontend: Data Grid**
+- [ ] **2.5 Frontend: Data Grid**
   - Tabela de Contatos Server-side.
 - [ ] 💾 **COMMIT:** `feat(web): contacts data grid`
 - [ ] 🏷️ **TAG:** `git tag -a v0.3.0 -m "Milestone 2: Contacts & UX"`
@@ -118,15 +132,19 @@
 
 **Objetivo:** Colaboração síncrona e Uploads.
 
-- [ ] **3.1 📐 Storage Module**
+- [ ] **3.1 � Atualizar Diagrama de Classes**
+  - Adicionar entidades `Deal`, `Pipeline`, `Attachment`.
+  - Mapear relacionamentos com `Contact` e `Storage`.
+- [ ] 💾 **COMMIT:** `docs: update class diagram with pipeline module`
+- [ ] **3.2 �📐 Storage Module**
   - Presigned URLs para S3/MinIO.
   - Validação de segurança (MIME/Size).
 - [ ] 💾 **COMMIT:** `feat: secure storage module`
-- [ ] **3.2 Backend: WebSockets**
+- [ ] **3.3 Backend: WebSockets**
   - `EventsGateway` (Socket.io).
   - Evento `deal.moved`.
 - [ ] 💾 **COMMIT:** `feat: websocket gateway`
-- [ ] **3.3 Frontend: Kanban & Upload**
+- [ ] **3.4 Frontend: Kanban & Upload**
   - `dnd-kit` + Optimistic Updates.
   - Upload direto para S3.
 - [ ] 💾 **COMMIT:** `feat(web): kanban board with sync and uploads`
