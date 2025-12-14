@@ -39,12 +39,12 @@
 
 **Objetivo:** Base sólida com estrutura Modular do NestJS e Tooling.
 
-- [ ] **0.1 Setup do Monorepo (Workspaces)**
+- [x] **0.1 Setup do Monorepo (Workspaces)**
   - Inicializar Git.
   - Criar `package.json` raiz com workspaces: `["server", "web"]`.
   - Criar pasta `/server` (`nest new server`).
   - Criar pasta `/web` (`npm create vite@latest web`).
-- [ ] 💾 **COMMIT:** `chore: init monorepo structure with npm workspaces`
+- [x] 💾 **COMMIT:** `chore: init monorepo structure with npm workspaces`
 - [ ] **0.2 Tooling & Linting**
   - Configurar ESLint 9 (Flat Config) na raiz.
   - Configurar Prettier e `.editorconfig`.
@@ -63,7 +63,25 @@
 - [ ] **0.4 Dockerização (Infra Local)**
   - Criar `docker-compose.yml`: Postgres, Redis, MinIO.
 - [ ] 💾 **COMMIT:** `ops: add docker-compose for local development`
-- [ ] **0.5 Hello World TDD**
+- [ ] **0.5 📊 Logging (Observabilidade)**
+  - Instalar **Pino** (`npm i pino pino-http pino-pretty nestjs-pino`).
+  - Criar `LoggerModule` e `LoggerService` customizado:
+    - Configurar níveis de log por ambiente (dev: debug, prod: info).
+    - Habilitar pretty-print em desenvolvimento.
+    - Logs estruturados em JSON para produção.
+  - Implementar `LoggingInterceptor` global:
+    - Logar todas as requisições HTTP (método, URL, status, duração).
+    - Adicionar `correlationId` (UUID) em cada request para rastreamento.
+    - Capturar IP do cliente e User-Agent.
+  - Integrar com `AllExceptionsFilter`:
+    - Logar stack trace completo de erros.
+    - Incluir contexto da requisição (IP, método, rota, headers).
+  - Adicionar logs contextuais em pontos críticos:
+    - Início/fim de operações do sistema.
+    - Performance de queries lentas (threshold: >500ms).
+    - Nota: Logs de autenticação e contexto de usuário serão adicionados no Milestone 1.
+- [ ] 💾 **COMMIT:** `feat: implement structured logging with pino`
+- [ ] **0.6 Hello World TDD**
   - Configurar **Vitest** no NestJS.
   - Teste do `AppController` (Health Check).
 - [ ] 💾 **COMMIT:** `test: configure vitest and add health check test`
@@ -109,19 +127,25 @@
   - Adicionar entidade `Contact` e `AuditLog`.
   - Atualizar relacionamentos com `Team` e `User`.
 - [ ] 💾 **COMMIT:** `docs: update class diagram with contacts module`
-- [ ] **2.2 📐 Auditoria (AOP)**
-  - `AuditInterceptor` para logar mutações.
+- [ ] **2.2 📐 Modelagem de Auditoria (Prisma)**
+  - Adicionar schema `AuditLog` no Prisma.
+  - Campos: `id`, `userId`, `action`, `entity`, `entityId`, `changes`, `timestamp`, `ip`.
+  - Migration Dev.
+- [ ] 💾 **COMMIT:** `feat: add audit log schema`
+- [ ] **2.3 📐 Auditoria (AOP)**
+  - `AuditInterceptor` para logar mutações no `AuditLog`.
+  - Capturar contexto do usuário autenticado (disponível após Milestone 1).
 - [ ] 💾 **COMMIT:** `feat: implement audit log interceptor`
-- [ ] **2.3 Backend: Contacts Module (TDD)**
+- [ ] **2.4 Backend: Contacts Module (TDD)**
   - CRUD com isolamento por Time.
   - **Database Seeding:** Criar script `prisma/seed.ts` (Faker.js) para popular banco.
 - [ ] 💾 **COMMIT:** `feat: contacts crud and database seeder`
-- [ ] **2.4 Frontend: Setup & Navigation**
+- [ ] **2.5 Frontend: Setup & Navigation**
   - Shadcn/UI, Tailwind v4.
   - Componente `CmdkDialog` (Command Palette).
   - Integrar API usando o SDK gerado.
 - [ ] 💾 **COMMIT:** `feat(web): setup ui and command palette navigation`
-- [ ] **2.5 Frontend: Data Grid**
+- [ ] **2.6 Frontend: Data Grid**
   - Tabela de Contatos Server-side.
 - [ ] 💾 **COMMIT:** `feat(web): contacts data grid`
 - [ ] 🏷️ **TAG:** `git tag -a v0.3.0 -m "Milestone 2: Contacts & UX"`

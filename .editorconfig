@@ -1,0 +1,17 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# Esta é a configuração raiz, não procure por outras acima
+root = true
+
+# Aplica estas regras para TODOS os arquivos (*)
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Arquivos Markdown (.md) podem ter espaços no final (usado para quebra de linha)
+[*.md]
+trim_trailing_whitespace = false
