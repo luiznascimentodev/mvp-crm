@@ -1,1 +1,8 @@
 node_modules
+
+/generated/prisma
+
+# Ignora .env em qualquer nível
+.env
+.env.*
+!.env.example

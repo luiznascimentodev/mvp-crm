@@ -93,15 +93,18 @@
 
 **Objetivo:** Auth segura e integração Front-Back automatizada.
 
-- [ ] **1.1 � Diagrama de Classes (Domínio Core)**
+- [x] **1.1 � Diagrama de Classes (Domínio Core)**
   - Modelar entidades: `User`, `Team`, `Role`, relacionamentos.
   - Definir atributos e multiplicidades.
   - Criar diagrama UML (PlantUML ou Mermaid).
-- [ ] 💾 **COMMIT:** `docs: add core domain class diagram`
-- [ ] **1.2 �📐 Modelagem de Domínio (Prisma)**
-  - Schema: `User`, `Team`, `Role`.
-  - Migration Dev.
-- [ ] 💾 **COMMIT:** `feat: add user, team and role prisma schema`
+- [x] 💾 **COMMIT:** `docs: add core domain class diagram`
+- [x] **1.2 📐 Modelagem de Domínio (Prisma)**
+  - Schema completo: `Tenant`, `User`, `Lead`, `Contact`, `Deal`, `Activity`
+  - Soft Delete: Campo `deletedAt` em Lead, Contact, Deal, Activity
+  - Unique Constraints: `[tenantId, email]` em User e Contact
+  - Migration Dev: `npx prisma migrate dev --name init-crm-schema`
+  - **Aplicar Check Constraint SQL:** Constraint polimórfico em Activity garantindo que `lead_id`, `contact_id` ou `deal_id` seja NOT NULL
+- [x] 💾 **COMMIT:** `feat: add crm multi-tenant prisma schema with constraints`
 - [ ] **1.3 TDD: Auth Service (Lógica)**
   - `AuthService`: Register com Argon2.
   - `JwtStrategy`: Passport JWT.
@@ -109,7 +112,9 @@
 - [ ] **1.4 🛡️ Guards (RBAC)**
   - Decorator `@Roles()`.
   - `RolesGuard` e `TeamsGuard`.
-- [ ] 💾 **COMMIT:** `feat: add rbac guards`
+  - **Lead Ownership Guard:** Implementar regra de negócio onde vendedores (role=member) só acessam seus próprios leads (`ownerId = userId`), enquanto owners/admins acessam todos os leads do tenant
+  - TDD: Teste garantindo que vendedor A não acessa lead do vendedor B
+- [ ] 💾 **COMMIT:** `feat: add rbac guards with lead ownership validation`
 - [ ] **1.5 📚 Docs & SDK Generation**
   - Configurar Swagger no Backend.
   - Configurar `@hey-api/openapi-ts` no Frontend.

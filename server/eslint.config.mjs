@@ -7,7 +7,13 @@ import pluginVitest from 'eslint-plugin-vitest';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'eslint.config.mjs',
+      'src/generated/**',
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

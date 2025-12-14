@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// 🏢 TENANT (Multi-tenancy)
+// ============================================================================
+
+/// Representa uma empresa/organização no sistema (SaaS Multi-tenant)
+model Tenant {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Identificação
+  name String @db.VarChar(255)
+  slug String @unique @db.VarChar(100)
+
+  // Configurações
+  isActive Boolean @default(true)
+  plan     String  @default("free") @db.VarChar(50)
+  maxUsers Int     @default(5)
+  maxLeads Int     @default(100)
+
+  // Auditoria
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  // Relacionamentos
+  users      User[]
+  leads      Lead[]
+  contacts   Contact[]
+  deals      Deal[]
+  activities Activity[]
+
+  @@map("tenants")
+}
+
+// ============================================================================
+// 👤 USER (Usuários do Sistema)
+// ============================================================================
+
+/// Usuários que acessam o sistema (pertencentes a um Tenant)
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Relacionamento com Tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Identificação
+  email     String  @db.VarChar(255)
+  name      String  @db.VarChar(255)
+  avatarUrl String? @db.VarChar(500)
+
+  // Autenticação
+  passwordHash String @db.VarChar(255)
+
+  // Permissões
+  role     String  @default("member") @db.VarChar(50)
+  isActive Boolean @default(true)
+
+  // Auditoria
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  // Relacionamentos
+  ownedLeads        Lead[]     @relation("LeadOwner")
+  ownedContacts     Contact[]  @relation("ContactOwner")
+  ownedDeals        Deal[]     @relation("DealOwner")
+  createdActivities Activity[] @relation("ActivityCreator")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+// ============================================================================
+// 🎯 LEAD (Prospects)
+// ============================================================================
+
+/// Potenciais clientes (não qualificados ainda)
+model Lead {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Relacionamento com Tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Responsável pelo Lead
+  ownerId String? @db.Uuid
+  owner   User?   @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  // Informações Básicas
+  name    String  @db.VarChar(255)
+  email   String? @db.VarChar(255)
+  phone   String? @db.VarChar(50)
+  company String? @db.VarChar(255)
+
+  // Qualificação
+  source String? @db.VarChar(100) // "website", "referral", "cold_call", etc.
+  status String  @default("new") @db.VarChar(50) // "new", "contacted", "qualified", "lost"
+
+  // Dados Adicionais
+  notes String? @db.Text
+
+  // Auditoria
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  // Relacionamentos
+  activities Activity[]
+
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("leads")
+}
+
+// ============================================================================
+// 📇 CONTACT (Contatos Qualificados)
+// ============================================================================
+
+/// Contatos qualificados (ex-Leads convertidos)
+model Contact {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Relacionamento com Tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Responsável pelo Contato
+  ownerId String? @db.Uuid
+  owner   User?   @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  // Informações Básicas
+  name    String @db.VarChar(255)
+  email   String @db.VarChar(255)
+  phone   String @db.VarChar(50)
+  company String @db.VarChar(255)
+
+  // Informações Adicionais
+  position String? @db.VarChar(100)
+  website  String? @db.VarChar(255)
+  linkedin String? @db.VarChar(255)
+
+  // Endereço
+  address String? @db.VarChar(255)
+  city    String? @db.VarChar(100)
+  state   String? @db.VarChar(50)
+  zipCode String? @db.VarChar(20)
+  country String? @db.VarChar(100)
+
+  // Dados Adicionais
+  notes String? @db.Text
+
+  // Auditoria
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  // Relacionamentos
+  deals      Deal[]
+  activities Activity[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@map("contacts")
+}
+
+// ============================================================================
+// 💰 DEAL (Oportunidades de Venda)
+// ============================================================================
+
+/// Negociações ativas com valor monetário
+model Deal {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Relacionamento com Tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Responsável pelo Deal
+  ownerId String? @db.Uuid
+  owner   User?   @relation("DealOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  // Relacionamento com Contact
+  contactId String  @db.Uuid
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  // Informações Básicas
+  title       String  @db.VarChar(255)
+  description String? @db.Text
+
+  // Financeiro
+  value    Decimal @db.Decimal(15, 2) // Ex: 15000.50
+  currency String  @default("BRL") @db.VarChar(3) // ISO 4217 (BRL, USD, EUR)
+
+  // Pipeline
+  stage             String    @db.VarChar(50) // "prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"
+  probability       Int       @default(0) // 0-100%
+  expectedCloseDate DateTime? @db.Date
+
+  // Status
+  isActive   Boolean   @default(true)
+  closedAt   DateTime? @db.Timestamptz
+  lostReason String?   @db.Text
+
+  // Auditoria
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+  // Relacionamentos
+  activities Activity[]
+
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([contactId])
+  @@index([stage])
+  @@index([deletedAt])
+  @@map("deals")
+}
+
+// ============================================================================
+// 📋 ACTIVITY (Atividades/Interações)
+// ============================================================================
+
+/// Registro de todas as interações (ligações, emails, reuniões, tarefas)
+model Activity {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Relacionamento com Tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Criador da Atividade
+  createdById String @db.Uuid
+  createdBy   User   @relation("ActivityCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  // Tipo de Atividade
+  type String @db.VarChar(50) // "call", "email", "meeting", "task", "note"
+
+  // Relacionamentos Polimórficos (uma atividade pode estar em Lead, Contact ou Deal)
+  leadId String? @db.Uuid
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  contactId String?  @db.Uuid
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  dealId String? @db.Uuid
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  // Conteúdo
+  subject     String  @db.VarChar(255)
+  description String? @db.Text
+
+  // Agendamento (para tarefas/reuniões)
+  scheduledAt DateTime? @db.Timestamptz
+  completedAt DateTime? @db.Timestamptz
+  isCompleted Boolean   @default(false)
+
+  // Duração (em minutos, para ligações/reuniões)
+  durationMinutes Int? @db.Integer
+
+  // Auditoria
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  updatedAt DateTime  @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+
+
+  @@index([tenantId])
+  @@index([createdById])
+  @@index([leadId])
+  @@index([contactId])
+  @@index([dealId])
+  @@index([type])
+  @@index([scheduledAt])
+  @@index([deletedAt])
+  @@map("activities")
+}
