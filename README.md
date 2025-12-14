@@ -2,15 +2,11 @@
 
 <!-- PROJECT_TITLE_START -->
 
-# 🚧 Orbit CRM
-
-**Plataforma de Gestão de Relacionamento com Arquitetura de Microsserviços e Segurança Ofensiva**
-_(Em Desenvolvimento Ativo)_
+🪐 Orbit CRM
 
 <!-- PROJECT_TITLE_END -->
-<!-- PROJECT_TITLE_END -->
 
-<!-- PROJECT_TAG_START -->
+<!-- PROJECT_TECH_START -->
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
@@ -19,7 +15,7 @@ _(Em Desenvolvimento Ativo)_
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
-<!-- PROJECT_TAG_END -->
+<!-- PROJECT_TECH_END -->
 
 <!-- PROJECT_DEMO_START -->
 
@@ -34,7 +30,7 @@ https://github.com/luiznascimentodev/mvp-crm
 ## 🌟 Visão Geral do Projeto
 
 Orbit CRM
-Este projeto, atualmente em fase de desenvolvimento acelerado, visa estabelecer um novo padrão para aplicações corporativas no meu portfólio. Trata-se de um CRM (Customer Relationship Management) "Full-Cycle" projetado para simular cenários reais de alta complexidade, incluindo colaboração em tempo real via WebSockets, processamento assíncrono de tarefas pesadas e uma arquitetura orientada a eventos. O foco principal não é apenas a funcionalidade, mas a excelência na engenharia: TDD (Test Driven Development) estrito, segurança ofensiva (OWASP Top 10) e orquestração de infraestrutura com Kubernetes.
+Este projeto, atualmente em fase de desenvolvimento acelerado, visa estabelecer um novo padrão para aplicações corporativas no meu portfólio. Trata-se de um CRM (Customer Relationship Management) "Full-Cycle" projetado para simular cenários reais de alta complexidade, incluindo colaboração em tempo real via WebSockets, processamento assíncrono de tarefas pesadas com workers dedicados e uma arquitetura modular bem estruturada. O foco principal não é apenas a funcionalidade, mas a excelência na engenharia: TDD (Test Driven Development) estrito, segurança ofensiva (OWASP Top 10) e orquestração de infraestrutura com Kubernetes.
 
 <!-- PROJECT_HIGHLIGHTS_START -->
 
@@ -61,8 +57,6 @@ O sistema está sendo construído módulo a módulo, seguindo uma estratégia de
 ## 🛠️ Stack Tecnológica
 
 A escolha das tecnologias reflete o "Estado da Arte" do desenvolvimento web em 2025:
-
-<!-- PROJECT_TECH_START -->
 
 ### Backend (API & Workers)
 
@@ -93,4 +87,4 @@ A escolha das tecnologias reflete o "Estado da Arte" do desenvolvimento web em 2
 
 ## 📁 Estrutura do Monorepo
 
-O projeto segue uma estrutura escalável de monorepo para facilitar a gestão de microsserviços e frontend:
+O projeto segue uma estrutura de monorepo modular para organização clara entre API, Workers e Frontend:

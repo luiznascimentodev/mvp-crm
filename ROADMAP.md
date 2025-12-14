@@ -1,13 +1,13 @@
-# 🗺️ Roadmap: Orbit CRM (2025 Edition)
+# 🗺️ Roadmap: Orbit CRM (Enterprise MVP)
 
-> **Visão do Projeto:** Uma plataforma de CRM "Full-Cycle", simulando um ambiente corporativo real. O sistema utiliza **Arquitetura Orientada a Eventos**, **Segurança Ofensiva**, **Processamento Assíncrono** e **Gestão de Arquivos em Nuvem**.
+> **Visão do Projeto:** Uma plataforma de CRM com arquitetura de **Monólito Modular**, simulando um ambiente corporativo real. O sistema utiliza **Segurança Ofensiva**, **Processamento Assíncrono** e **Gestão de Arquivos em Nuvem**.
 
 ---
 
 ## 💎 Pilares Técnicos & Parâmetros de Mercado
 
 1.  **Storage Seguro & Performático:** Uploads de arquivos (Contratos/Propostas) usando **Presigned URLs**. O backend apenas autoriza, o frontend envia direto para o Object Storage (S3/MinIO).
-2.  **Assincronicidade (Background Jobs):** Emails e tarefas pesadas são processados por Workers (BullMQ + Redis), nunca bloqueando a API.
+2.  **Assincronicidade (Background Jobs):** Emails e tarefas pesadas são processados por Workers (BullMQ + Redis), garantindo que a API principal permaneça rápida.
 3.  **Rastreabilidade (Audit Logs):** Cada alteração de dado gera um rastro imutável ("Quem, Quando, Onde").
 4.  **UX "Keyboard-First":** Navegação via Command Palette (`Cmd+K`) e Colaboração em Tempo Real (WebSockets).
 5.  **RBAC (Role-Based Access Control):** Isolamento estrito de dados entre Times e Níveis Hierárquicos.
@@ -19,7 +19,7 @@
 | Camada            | Tecnologia     | Versão       | Justificativa de Mercado                    |
 | :---------------- | :------------- | :----------- | :------------------------------------------ |
 | **Runtime**       | Node.js        | **v24.12.0** | Estabilidade LTS.                           |
-| **Framework**     | Fastify        | **v5.6.2**   | Baixa latência.                             |
+| **Framework**     | Fastify        | **v5.6.2**   | Baixa latência e arquitetura modular.       |
 | **Storage**       | AWS S3 / MinIO | **SDK v3**   | Padrão da indústria para arquivos.          |
 | **Queues**        | BullMQ         | **v5.12**    | Gerenciamento robusto de filas sobre Redis. |
 | **Database**      | PostgreSQL     | **v17.2**    | ACID Compliance.                            |
@@ -34,7 +34,7 @@
 **Objetivo:** Base sólida com suporte a Storage Local.
 
 - [ ] **0.1 Setup do Monorepo**
-  - Estrutura `/server`, `/web`, `/k8s`, `/docs`.
+  - Estrutura `/server` (API + Workers), `/web`, `/k8s`, `/docs`.
 - [ ] **0.2 Tooling & Quality Gates**
   - ESLint 9, Prettier, Husky.
 - [ ] **0.3 🛡️ Hardening & Env Validation**
@@ -150,11 +150,15 @@
 
 **Objetivo:** Deploy profissional.
 
-- [ ] **7.1 Manifestos K8s**
+- [ ] **7.1 Arquitetura de Processos (Workloads)**
+  - Separação de cargas de trabalho no Kubernetes:
+    1. **API Server:** Serve as requisições HTTP/Websockets.
+    2. **Background Worker:** Consome a fila do BullMQ (mesmo código, ponto de entrada diferente).
+- [ ] **7.2 Manifestos K8s**
   - `deployment-api.yaml`.
   - `deployment-worker.yaml`.
-  - `statefulset-minio.yaml` (Para ambiente de Staging, ou ExternalName para S3 em Prod).
-- [ ] **7.2 Secrets Management**
+  - `statefulset-minio.yaml` (Para ambiente de Staging).
+- [ ] **7.3 Secrets Management**
   - Configurar credenciais AWS/MinIO via K8s Secrets.
 - [ ] 💾 **COMMIT:** `ops: k8s manifests including worker and storage`
 - [ ] 🏷️ **TAG:** `git tag -a v0.7.0 -m "Milestone 7: Kubernetes Orchestration"`
