@@ -50,11 +50,11 @@
   - Configurar Prettier e `.editorconfig`.
   - Configurar Husky e Commitlint.
 - [x] 💾 **COMMIT:** `chore: configure strict eslint, prettier and husky`
-- [ ] **0.2.1 📊 Diagrama de Casos de Uso**
+- [x] **0.2.1 📊 Diagrama de Casos de Uso**
   - Mapear funcionalidades principais (Auth, Contacts, Pipeline, Teams).
   - Definir atores (Admin, Manager, Seller).
   - Criar diagrama UML (PlantUML ou Mermaid).
-- [ ] 💾 **COMMIT:** `docs: add use case diagram`
+- [x] 💾 **COMMIT:** `docs: add use case diagram`
 - [ ] **0.3 🛡️ Hardening & Config**
   - Configurar `ConfigModule` com validação **Zod**.
   - Configurar `FastifyAdapter` e `helmet`.
