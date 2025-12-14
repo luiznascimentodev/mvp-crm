@@ -63,7 +63,7 @@
 - [x] **0.4 Dockerização (Infra Local)**
   - Criar `docker-compose.yml`: Postgres, Redis, MinIO.
 - [x] 💾 **COMMIT:** `ops: add docker-compose for local development`
-- [ ] **0.5 📊 Logging (Observabilidade)**
+- [x] **0.5 📊 Logging (Observabilidade)**
   - Instalar **Pino** (`npm i pino pino-http pino-pretty nestjs-pino`).
   - Criar `LoggerModule` e `LoggerService` customizado:
     - Configurar níveis de log por ambiente (dev: debug, prod: info).
@@ -80,7 +80,7 @@
     - Início/fim de operações do sistema.
     - Performance de queries lentas (threshold: >500ms).
     - Nota: Logs de autenticação e contexto de usuário serão adicionados no Milestone 1.
-- [ ] 💾 **COMMIT:** `feat: implement structured logging with pino`
+- [x] 💾 **COMMIT:** `feat: implement structured logging with pino`
 - [ ] **0.6 Hello World TDD**
   - Configurar **Vitest** no NestJS.
   - Teste do `AppController` (Health Check).

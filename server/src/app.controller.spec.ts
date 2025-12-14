@@ -9,7 +9,17 @@ describe('AppController', () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [AppService],
-    }).compile();
+    })
+      // BEST PRACTICE: Configura o logger ANTES de compilar o módulo.
+      // Isso garante silêncio absoluto desde o milissegundo zero.
+      .setLogger({
+        log: () => {},
+        error: () => {},
+        warn: () => {},
+        debug: () => {},
+        verbose: () => {},
+      })
+      .compile();
 
     appController = app.get<AppController>(AppController);
   });
