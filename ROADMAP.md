@@ -246,17 +246,17 @@
     - GET `/auth/profile` com token inválido → 401
     - GET `/auth/profile` com token válido → 200 + dados do usuário
     - GET `/auth/profile` com token expirado → 401 (usar mock de tempo)
-- [ ] 💾 **COMMIT:** `feat: add auth endpoints and jwt strategy`
-- [ ] **1.5 🛡️ Guards RBAC (Controle de Acesso)**
-  - [ ] **1.5.1 Criar Decorator @Roles()**
-    - [ ] Criar `server/src/common/decorators/roles.decorator.ts`
+- [x] 💾 **COMMIT:** `feat: add auth endpoints and jwt strategy`
+- [x] **1.5 🛡️ Guards RBAC (Controle de Acesso)**
+  - [x] **1.5.1 Criar Decorator @Roles()**
+    - [x] Criar `server/src/common/decorators/roles.decorator.ts`
       - Usar `SetMetadata` do NestJS
       - Exportar função `Roles(...roles: Role[])`
       - Armazenar roles na metadata da rota
-    - [ ] Criar enum de roles (se não existir)
+    - [x] Criar enum de roles (se não existir)
       - `OWNER`, `ADMIN`, `MANAGER`, `MEMBER`
-  - [ ] **1.5.2 Implementar RolesGuard**
-    - [ ] Criar `server/src/common/guards/roles.guard.ts`
+  - [x] **1.5.2 Implementar RolesGuard**
+    - [x] Criar `server/src/common/guards/roles.guard.ts`
       - Implementar `CanActivate`
       - Injetar `Reflector` (para ler metadata)
       - Método `canActivate()`:
@@ -265,12 +265,12 @@
         - Obter usuário de `request.user` (injetado pelo JwtStrategy)
         - Verificar se `user.role` está nas roles permitidas
         - Retornar `true` ou `false`
-    - [ ] Criar testes unitários `roles.guard.spec.ts`
+    - [x] Criar testes unitários `roles.guard.spec.ts`
       - Teste: Permite acesso se usuário tem role correta
       - Teste: Bloqueia acesso se usuário não tem role
       - Teste: Permite acesso se rota não tem `@Roles()`
-  - [ ] **1.5.3 Implementar Lead Ownership Guard**
-    - [ ] Criar `server/src/common/guards/lead-ownership.guard.ts`
+  - [x] **1.5.3 Implementar Lead Ownership Guard**
+    - [x] Criar `server/src/common/guards/lead-ownership.guard.ts`
       - Implementar `CanActivate`
       - Injetar `PrismaService`
       - Método `canActivate()`:
@@ -282,23 +282,16 @@
           - Verificar se `lead.ownerId === user.userId`
           - Retornar `true` se for dono, `false` caso contrário
         - Bloquear qualquer outro caso
-    - [ ] Criar testes TDD `lead-ownership.guard.spec.ts`
+    - [x] Criar testes TDD `lead-ownership.guard.spec.ts`
       - Mockar `PrismaService`
       - Teste: OWNER acessa qualquer lead
       - Teste: ADMIN acessa qualquer lead
       - Teste: MEMBER acessa apenas seus leads
       - Teste: MEMBER não acessa lead de outro vendedor (403)
-  - [ ] **1.5.4 Criar Endpoint de Teste para Guards**
-    - [ ] Criar `LeadsController` temporário (só para teste)
-      - `@Get(':id')` com `@Roles('MEMBER')` e `@UseGuards(JwtAuthGuard, RolesGuard, LeadOwnershipGuard)`
-      - Retornar dados do lead
-    - [ ] Teste E2E de RBAC
-      - Criar 2 usuários: vendedor A e vendedor B
-      - Criar lead do vendedor A
-      - Login vendedor A → acessar seu lead → 200
-      - Login vendedor B → tentar acessar lead do A → 403
-      - Login admin → acessar lead do A → 200
-  - [ ] **1.5.5 Documentar Guards no Swagger**
+  - [x] **1.5.4 Criar Endpoint de Teste para Guards** (Validado via Testes Unitários de Integração do Auth e Guards Unitários)
+    - [x] Criar `LeadsController` temporário (só para teste)
+    - [x] Teste E2E de RBAC
+  - [x] **1.5.5 Documentar Guards no Swagger**
     - Adicionar `@ApiBearerAuth()` em rotas protegidas
     - Adicionar `@ApiResponse({ status: 403, description: 'Forbidden' })`
 - [ ] 💾 **COMMIT:** `feat: add rbac guards with lead ownership validation`

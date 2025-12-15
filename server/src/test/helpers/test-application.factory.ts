@@ -1,14 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ValidationPipe } from '@nestjs/common';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from '../../app.module';
 
-export async function createTestApplication(): Promise<NestFastifyApplication> {
+import { ModuleMetadata } from '@nestjs/common';
+
+export async function createTestApplication(
+  overrides?: ModuleMetadata,
+): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule, ...(overrides?.imports || [])],
+    controllers: [...(overrides?.controllers || [])],
+    providers: [...(overrides?.providers || [])],
   }).compile();
 
   const application =
