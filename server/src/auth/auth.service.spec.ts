@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/unbound-method */
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as argon2 from 'argon2';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuthService } from './auth.service';
 
 vi.mock('argon2', () => ({
   hash: vi.fn().mockResolvedValue('hashed-password-mock'),

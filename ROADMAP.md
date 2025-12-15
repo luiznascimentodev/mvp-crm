@@ -350,7 +350,7 @@
     - Instruções para gerar SDK: `npm run generate:sdk`
     - Exemplos de uso do SDK no frontend
 - [ ] 💾 **COMMIT:** `chore: setup automated sdk generation from swagger`
-- [ ] 🏷️ **TAG:** `git tag -a v0.2.0 -m "Milestone 1: Auth & SDK"`
+- [x] 🏷️ **TAG:** `git tag -a v0.2.0 -m "Milestone 1: Auth & SDK"`
 
 ---
 

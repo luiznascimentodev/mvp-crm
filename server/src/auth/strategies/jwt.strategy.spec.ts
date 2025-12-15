@@ -28,7 +28,7 @@ describe('JwtStrategy', () => {
     expect(strategy).toBeDefined();
   });
 
-  it('should validate and return user data', async () => {
+  it('should validate and return user data', () => {
     const payload = {
       sub: 'user-123',
       email: 'test@example.com',
@@ -36,7 +36,7 @@ describe('JwtStrategy', () => {
       role: 'MEMBER',
     };
 
-    const result = await strategy.validate(payload);
+    const result = strategy.validate(payload);
 
     expect(result).toEqual({
       userId: 'user-123',

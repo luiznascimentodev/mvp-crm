@@ -19,6 +19,12 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
+import { JwtPayload } from './strategies/jwt.strategy';
+
+interface RequestWithUser {
+  user: JwtPayload;
+}
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -53,7 +59,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get user profile (protected)' })
   @ApiResponse({ status: 200, description: 'Returns user profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  getProfile(@Request() req) {
+  getProfile(@Request() req: RequestWithUser) {
     return req.user;
   }
 }

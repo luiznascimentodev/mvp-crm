@@ -7,14 +7,20 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '../enums/role.enum';
 
+interface AuthenticatedRequest {
+  user?: { role: Role; userId: string };
+  params: { id?: string };
+}
+
 @Injectable()
 export class LeadOwnershipGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
-    const { id: leadId } = request.params; // Assume que o parâmetro da rota é :id
+    const params = request.params;
+    const leadId = params.id;
 
     if (!user) {
       return false; // Usuário não autenticado

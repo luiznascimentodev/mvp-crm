@@ -283,7 +283,12 @@ describe('AuthController (Integration)', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const body = response.json();
+      const body = response.json<{
+        userId: string;
+        email: string;
+        tenantId: string;
+        role: string;
+      }>();
       expect(body).toHaveProperty('userId');
       expect(body).toHaveProperty('email', userEmail);
       expect(body).toHaveProperty('tenantId', TEST_TENANT_ID);

@@ -20,7 +20,11 @@ describe('LeadOwnershipGuard', () => {
     vi.clearAllMocks();
   });
 
-  const mockContext = (userRole: Role, userId: string, params: any = {}) =>
+  const mockContext = (
+    userRole: Role,
+    userId: string,
+    params: Record<string, string> = {},
+  ) =>
     ({
       switchToHttp: () => ({
         getRequest: () => ({
