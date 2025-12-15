@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { createTestApplication } from '../test/helpers/test-application.factory';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { PrismaService } from '../prisma/prisma.service';
 import { cleanDatabase } from '../test/helpers/database-cleaner';
+import { createTestApplication } from '../test/helpers/test-application.factory';
 import {
   TEST_TENANT_ID,
   seedTestTenant,
 } from '../test/helpers/test-data-seeder';
-import { PrismaService } from '../prisma/prisma.service';
 
 describe('AuthController (Integration)', () => {
   let application: NestFastifyApplication;
@@ -216,6 +216,78 @@ describe('AuthController (Integration)', () => {
       });
 
       expect(response.statusCode).toBe(401);
+    });
+  });
+  describe('GET /auth/profile (Protected)', () => {
+    const validPassword = 'senha123456';
+    let accessToken: string;
+    const userEmail = 'profiletest@example.com';
+
+    beforeEach(async () => {
+      // Registrar usuário
+      await application.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: {
+          email: userEmail,
+          password: validPassword,
+          name: 'Profile Test User',
+          tenantId: TEST_TENANT_ID,
+        },
+      });
+
+      // Login para obter token
+      const loginResponse = await application.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: {
+          email: userEmail,
+          password: validPassword,
+          tenantId: TEST_TENANT_ID,
+        },
+      });
+
+      const body: { access_token: string } = loginResponse.json();
+      accessToken = body.access_token;
+    });
+
+    it('should return 401 when no token is provided', async () => {
+      const response = await application.inject({
+        method: 'GET',
+        url: '/auth/profile',
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('should return 401 when invalid token is provided', async () => {
+      const response = await application.inject({
+        method: 'GET',
+        url: '/auth/profile',
+        headers: {
+          Authorization: 'Bearer invalid-token',
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('should return user profile when valid token is provided', async () => {
+      const response = await application.inject({
+        method: 'GET',
+        url: '/auth/profile',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const body = response.json();
+      expect(body).toHaveProperty('userId');
+      expect(body).toHaveProperty('email', userEmail);
+      expect(body).toHaveProperty('tenantId', TEST_TENANT_ID);
+      expect(body).toHaveProperty('role', 'MEMBER');
     });
   });
 });

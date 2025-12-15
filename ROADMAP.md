@@ -215,9 +215,9 @@
     - POST `/auth/login` com email errado → 401
     - POST `/auth/login` com senha errada → 401
     - Validar que token JWT é válido (decodificar payload)
-- [ ] **1.4.4 Criar JwtStrategy (Passport)**
-  - [ ] Criar pasta `server/src/auth/strategies/`
-  - [ ] Criar arquivo `jwt.strategy.ts`
+- [x] **1.4.4 Criar JwtStrategy (Passport)**
+  - [x] Criar pasta `server/src/auth/strategies/`
+  - [x] Criar arquivo `jwt.strategy.ts`
     - Importar `PassportStrategy` de `@nestjs/passport`
     - Importar `Strategy, ExtractJwt` de `passport-jwt`
     - Estender `PassportStrategy(Strategy)`
@@ -230,17 +230,17 @@
       - Recebe payload decodificado do JWT
       - Retornar objeto do usuário: `{ userId: payload.sub, email: payload.email, tenantId: payload.tenantId, role: payload.role }`
       - Passport injeta retorno em `req.user` automaticamente
-  - [ ] Criar teste unitário `jwt.strategy.spec.ts`
+  - [x] Criar teste unitário `jwt.strategy.spec.ts`
     - Mockar `ConfigService`
     - Testar método `validate()`
     - Validar que retorna dados corretos do payload
-  - [ ] Registrar `JwtStrategy` como provider no `AuthModule`
-- [ ] **1.4.5 Testar Autenticação com Guard**
-  - [ ] Criar endpoint de teste protegido
+  - [x] Registrar `JwtStrategy` como provider no `AuthModule`
+- [x] **1.4.5 Testar Autenticação com Guard**
+  - [x] Criar endpoint de teste protegido
     - Adicionar método `@Get('profile')` no `AuthController`
     - Adicionar `@UseGuards(AuthGuard('jwt'))`
     - Retornar `req.user` (injeta automaticamente)
-  - [ ] Teste E2E de rota protegida
+  - [x] Teste E2E de rota protegida
     - Fazer login → obter token
     - GET `/auth/profile` SEM token → 401
     - GET `/auth/profile` com token inválido → 401
