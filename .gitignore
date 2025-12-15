@@ -6,3 +6,6 @@ node_modules
 .env
 .env.*
 !.env.example
+
+# Generated Frontend SDK
+web/src/generated/

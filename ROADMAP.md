@@ -294,12 +294,12 @@
   - [x] **1.5.5 Documentar Guards no Swagger**
     - Adicionar `@ApiBearerAuth()` em rotas protegidas
     - Adicionar `@ApiResponse({ status: 403, description: 'Forbidden' })`
-- [ ] 💾 **COMMIT:** `feat: add rbac guards with lead ownership validation`
-- [ ] **1.6 📚 Swagger & SDK Auto-geração**
-  - [ ] **1.6.1 Configurar Swagger no Backend**
-    - [ ] Instalar dependências
+- [x] 💾 **COMMIT:** `feat: add rbac guards with lead ownership validation`
+- [x] **1.6 📚 Swagger & SDK Auto-geração**
+  - [x] **1.6.1 Configurar Swagger no Backend**
+    - [x] Instalar dependências
       - `npm install @nestjs/swagger --workspace=server`
-    - [ ] Configurar Swagger no `main.ts`
+    - [x] Configurar Swagger no `main.ts`
       - Importar `SwaggerModule, DocumentBuilder`
       - Criar `SwaggerConfig`:
         - Título: "Orbit CRM API"
@@ -309,42 +309,42 @@
         - Bearer Auth configurado
       - Criar documento: `SwaggerModule.createDocument(app, config)`
       - Setup: `SwaggerModule.setup('api/docs', app, document)`
-    - [ ] Adicionar decorators nos DTOs
+    - [x] Adicionar decorators nos DTOs
       - `@ApiProperty()` em todos os campos
       - Exemplos de valores
       - Descrições claras
-    - [ ] Adicionar decorators nos Controllers
+    - [x] Adicionar decorators nos Controllers
       - `@ApiTags('auth')`
       - `@ApiOperation({ summary: '...' })`
       - `@ApiResponse()` para cada status code
       - `@ApiBearerAuth()` em rotas protegidas
-    - [ ] Testar Swagger UI
+    - [x] Testar Swagger UI
       - Iniciar servidor
       - Acessar `http://localhost:3333/api/docs`
       - Validar que todos os endpoints estão documentados
       - Testar "Try it out" no Swagger
-  - [ ] **1.6.2 Configurar SDK Auto-geração no Frontend**
-    - [ ] Instalar Hey API no workspace web
+  - [x] **1.6.2 Configurar SDK Auto-geração no Frontend**
+    - [x] Instalar Hey API no workspace web
       - `npm install @hey-api/openapi-ts --save-dev --workspace=web`
-    - [ ] Criar configuração `web/openapi-ts.config.ts`
+    - [x] Criar configuração `web/openapi-ts.config.ts`
       - Input: `http://localhost:3333/api/docs-json`
       - Output: `web/src/generated/api`
       - Client: `fetch`
       - Tipos: TypeScript
-    - [ ] Adicionar script no `web/package.json`
+    - [x] Adicionar script no `web/package.json`
       - `"generate:sdk": "openapi-ts"`
-    - [ ] Executar geração inicial
+    - [x] Executar geração inicial
       - `npm run generate:sdk --workspace=web`
       - Validar arquivos gerados em `web/src/generated/api/`
-    - [ ] Criar wrapper do SDK
+    - [x] Criar wrapper do SDK
       - `web/src/lib/api-client.ts`
       - Configurar baseURL
       - Configurar interceptors (adicionar token JWT)
       - Exportar client configurado
-    - [ ] Adicionar .gitignore
+    - [x] Adicionar .gitignore
       - Adicionar `web/src/generated/` no `.gitignore`
       - Manter apenas arquivos de configuração versionados
-  - [ ] **1.6.3 Documentar Processo no README**
+  - [x] **1.6.3 Documentar Processo no README**
     - Adicionar seção "API Documentation"
     - Instruções para acessar Swagger
     - Instruções para gerar SDK: `npm run generate:sdk`
