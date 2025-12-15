@@ -25,8 +25,11 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return health status', () => {
+      const result = appController.getHealth();
+      expect(result).toHaveProperty('status', 'up');
+      expect(result).toHaveProperty('service', 'Orbit CRM API');
+      expect(result).toHaveProperty('timestamp');
     });
   });
 });

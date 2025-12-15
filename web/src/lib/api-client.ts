@@ -2,7 +2,7 @@ import { client } from '../generated/api/client.gen';
 
 // Configurar Base URL
 client.setConfig({
-  baseUrl: 'http://localhost:3333',
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3333',
 });
 
 // Interceptor para adicionar Token JWT
