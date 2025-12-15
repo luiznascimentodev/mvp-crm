@@ -23,7 +23,7 @@ describe('AuthController (Integration)', () => {
 
   beforeEach(async () => {
     await cleanDatabase();
-    await seedTestTenant();
+    await seedTestTenant(prisma); // ✅ Passar a instância do Prisma
   });
 
   describe('POST /auth/register', () => {
@@ -152,6 +152,70 @@ describe('AuthController (Integration)', () => {
         expect(body).toHaveProperty('statusCode', 400);
         expect(body).toHaveProperty('message');
       }
+    });
+  });
+  describe('POST /auth/login', () => {
+    const validPassword = 'senha123456';
+
+    beforeEach(async () => {
+      // Criar usuário para testes de login
+      await application.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: {
+          email: 'logintest@example.com',
+          password: validPassword,
+          name: 'Login Test User',
+          tenantId: TEST_TENANT_ID,
+        },
+      });
+    });
+
+    it('should return access_token for valid credentials', async () => {
+      const response = await application.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: {
+          email: 'logintest@example.com',
+          password: validPassword,
+          tenantId: TEST_TENANT_ID,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const body: { access_token: string } = response.json();
+      expect(body).toHaveProperty('access_token');
+      expect(typeof body.access_token).toBe('string');
+      expect(body.access_token.length).toBeGreaterThan(0);
+    });
+
+    it('should return 401 for invalid email', async () => {
+      const response = await application.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: {
+          email: 'nonexistent@example.com',
+          password: validPassword,
+          tenantId: TEST_TENANT_ID,
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('should return 401 for invalid password', async () => {
+      const response = await application.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: {
+          email: 'logintest@example.com',
+          password: 'wrongpassword',
+          tenantId: TEST_TENANT_ID,
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
     });
   });
 });

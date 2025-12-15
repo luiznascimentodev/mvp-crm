@@ -1,14 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConflictException } from '@nestjs/common';
+import * as argon2 from 'argon2';
+
+vi.mock('argon2', () => ({
+  hash: vi.fn().mockResolvedValue('hashed-password-mock'),
+  verify: vi.fn(),
+}));
 
 describe('AuthService', () => {
   let service: AuthService;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let prismaService: PrismaService;
+  let prisma: PrismaService;
+  let jwtService: JwtService;
 
   const mockPrismaService = {
     user: {
@@ -17,7 +24,13 @@ describe('AuthService', () => {
     },
   };
 
+  const mockJwtService = {
+    sign: vi.fn(),
+  };
+
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -25,13 +38,16 @@ describe('AuthService', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
+        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prismaService = module.get<PrismaService>(PrismaService);
-
-    vi.clearAllMocks();
+    prisma = module.get<PrismaService>(PrismaService);
+    jwtService = module.get<JwtService>(JwtService);
   });
 
   describe('register', () => {
@@ -43,26 +59,20 @@ describe('AuthService', () => {
     };
 
     it('should hash password with argon2 and create user', async () => {
-      // Arrange
-      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique = vi.fn().mockResolvedValue(null);
 
-      // ✅ CORREÇÃO: Mock retorna APENAS campos do select
-      mockPrismaService.user.create.mockResolvedValue({
+      prisma.user.create = vi.fn().mockResolvedValue({
         id: 'user-123',
         email: registerDto.email,
         name: registerDto.name,
         tenantId: registerDto.tenantId,
         role: 'MEMBER',
         createdAt: new Date('2025-12-14T21:36:38.588Z'),
-        // ← NÃO inclui passwordHash, updatedAt, deletedAt
       });
-
-      // Act
 
       const result = await service.register(registerDto);
 
-      // Assert: Verificar chamada ao findUnique
-      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: {
           tenantId_email: {
             tenantId: registerDto.tenantId,
@@ -71,13 +81,12 @@ describe('AuthService', () => {
         },
       });
 
-      // Assert: Verificar chamada ao create
-      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+      expect(prisma.user.create).toHaveBeenCalledWith({
         data: {
           email: registerDto.email,
           name: registerDto.name,
           tenantId: registerDto.tenantId,
-          passwordHash: expect.any(String), // Hash Argon2
+          passwordHash: expect.any(String),
           role: 'MEMBER',
         },
         select: {
@@ -90,8 +99,6 @@ describe('AuthService', () => {
         },
       });
 
-      // Assert: Verificar retorno (SEM passwordHash)
-
       expect(result).toEqual({
         id: 'user-123',
         email: registerDto.email,
@@ -103,18 +110,105 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException if email already exists', async () => {
-      // Arrange
-      mockPrismaService.user.findUnique.mockResolvedValue({
+      prisma.user.findUnique = vi.fn().mockResolvedValue({
         id: 'existing-user',
         email: registerDto.email,
       });
 
-      // Act & Assert
       await expect(service.register(registerDto)).rejects.toThrow(
         ConflictException,
       );
 
-      expect(mockPrismaService.user.create).not.toHaveBeenCalled();
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('login', () => {
+    it('should return access_token for valid credentials', async () => {
+      const loginDto = {
+        email: 'john@example.com',
+        password: 'senha123456',
+        tenantId: 'tenant-123',
+      };
+
+      const mockUser = {
+        id: 'user-id',
+        email: 'john@example.com',
+        passwordHash: 'hashed-password',
+        tenantId: 'tenant-123',
+        role: 'MEMBER',
+        name: 'John Doe',
+      };
+
+      prisma.user.findUnique = vi.fn().mockResolvedValue(mockUser);
+      (argon2.verify as any) = vi.fn().mockResolvedValue(true);
+      jwtService.sign = vi.fn().mockReturnValue('jwt-token-here');
+
+      const result = await service.login(loginDto);
+
+      expect(result).toEqual({ access_token: 'jwt-token-here' });
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: {
+          tenantId_email: {
+            tenantId: loginDto.tenantId,
+            email: loginDto.email,
+          },
+        },
+      });
+      expect(argon2.verify).toHaveBeenCalledWith(
+        mockUser.passwordHash,
+        loginDto.password,
+      );
+      expect(jwtService.sign).toHaveBeenCalledWith({
+        sub: mockUser.id,
+        email: mockUser.email,
+        tenantId: mockUser.tenantId,
+        role: mockUser.role,
+      });
+    });
+
+    it('should throw UnauthorizedException for invalid email', async () => {
+      const loginDto = {
+        email: 'wrong@example.com',
+        password: 'senha123456',
+        tenantId: 'tenant-123',
+      };
+
+      prisma.user.findUnique = vi.fn().mockResolvedValue(null);
+
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid credentials',
+      );
+    });
+
+    it('should throw UnauthorizedException for invalid password', async () => {
+      const loginDto = {
+        email: 'john@example.com',
+        password: 'wrong-password',
+        tenantId: 'tenant-123',
+      };
+
+      const mockUser = {
+        id: 'user-id',
+        email: 'john@example.com',
+        passwordHash: 'hashed-password',
+        tenantId: 'tenant-123',
+        role: 'MEMBER',
+        name: 'John Doe',
+      };
+
+      prisma.user.findUnique = vi.fn().mockResolvedValue(mockUser);
+      (argon2.verify as any) = vi.fn().mockResolvedValue(false);
+
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid credentials',
+      );
     });
   });
 });

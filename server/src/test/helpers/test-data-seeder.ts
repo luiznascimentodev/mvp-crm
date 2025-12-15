@@ -1,23 +1,15 @@
-import { prisma } from './database-cleaner';
+import { PrismaClient } from '@prisma/client';
 
-export const TEST_TENANT_ID = '550e8400-e29b-41d4-a716-446655440000';
+export const TEST_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
-export async function seedTestTenant(): Promise<void> {
-  // ✅ Usar mesma instância do Prisma
-  const existingTenant = await prisma.tenant.findUnique({
+export async function seedTestTenant(prisma: PrismaClient) {
+  await prisma.tenant.upsert({
     where: { id: TEST_TENANT_ID },
-  });
-
-  if (existingTenant) {
-    return; // Já existe, não precisa criar
-  }
-
-  // Criar apenas se não existir
-  await prisma.tenant.create({
-    data: {
+    update: {},
+    create: {
       id: TEST_TENANT_ID,
-      name: 'Test Company',
-      slug: 'test-company',
+      name: 'Test Tenant',
+      slug: 'test-tenant',
     },
   });
 }

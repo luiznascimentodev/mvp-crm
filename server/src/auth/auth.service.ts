@@ -1,11 +1,19 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { RegisterDto, LoginDto } from './dto';
 import * as argon2 from 'argon2';
-import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { email, password, name, tenantId } = registerDto;
@@ -47,5 +55,46 @@ export class AuthService {
     });
 
     return user;
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password, tenantId } = loginDto;
+
+    // 1. Buscar usuário por email e tenantId
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        tenantId_email: {
+          tenantId,
+          email,
+        },
+      },
+    });
+
+    // 2. Validar se usuário existe
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // 3. Verificar senha com argon2
+    const isPasswordValid = await argon2.verify(user.passwordHash, password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // 4. Criar payload JWT
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      tenantId: user.tenantId,
+      role: user.role,
+    };
+
+    // 5. Gerar e retornar token
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      access_token: accessToken,
+    };
   }
 }

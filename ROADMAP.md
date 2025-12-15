@@ -160,103 +160,92 @@
     - Validar que `passwordHash` não é exposto na resposta
     - Todos os testes passando (2/2)
 - [x] 💾 **COMMIT:** `feat: implement auth service with argon2 and tdd`
-- [ ] **1.4 Auth Controller & Endpoints HTTP**
-  - [ ] **1.4.1 Implementar Endpoint de Registro**
-    - [ ] Criar método `register()` no `AuthController`
+- [x] **1.4 Auth Controller & Endpoints HTTP**
+  - [x] **1.4.1 Implementar Endpoint de Registro**
+    - [x] Criar método `register()` no `AuthController`
       - Adicionar decorator `@Post('register')`
       - Adicionar decorator `@HttpCode(HttpStatus.CREATED)`
       - Injetar `AuthService` no constructor
       - Receber `RegisterDto` com decorator `@Body()`
       - Chamar `authService.register(registerDto)`
       - Retornar objeto do usuário (sem senha)
-    - [ ] Adicionar documentação Swagger (preparação)
+    - [x] Adicionar documentação Swagger (preparação)
       - `@ApiTags('auth')`
       - `@ApiOperation({ summary: 'Register new user' })`
       - `@ApiResponse({ status: 201, description: 'User created' })`
       - `@ApiResponse({ status: 409, description: 'Email already exists' })`
-  - [ ] **1.4.2 Teste E2E do Endpoint de Registro**
-    - [ ] Configurar setup de teste E2E
-      - Criar arquivo `auth.e2e.spec.ts` em `server/test/`
-      - Configurar TestingModule com todos os módulos necessários
-      - Inicializar aplicação NestJS para testes
-      - Configurar limpeza do banco após cada teste
-    - [ ] Teste: Registro com sucesso (201)
-      - Enviar POST `/auth/register` com dados válidos
-      - Validar status 201
-      - Validar que resposta contém id, email, name, role
-      - Validar que resposta NÃO contém passwordHash
-      - Validar que usuário foi criado no banco
-    - [ ] Teste: Email duplicado (409)
-      - Criar usuário no banco (seed)
-      - Enviar POST com mesmo email
-      - Validar status 409
-      - Validar mensagem de erro
-    - [ ] Teste: Validação de campos (400)
-      - Email inválido → 400
-      - Senha < 8 caracteres → 400
-      - Nome vazio → 400
-      - TenantId ausente → 400
-  - [ ] **1.4.3 Implementar Login com JWT**
-    - [ ] Configurar JwtModule no AuthModule
-      - Importar `JwtModule.registerAsync()`
-      - Injetar `ConfigService` para ler variáveis do `.env`
-      - Configurar `secret: configService.get('JWT_SECRET')`
-      - Configurar `signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') }`
-    - [ ] Criar método `login()` no AuthService (TDD)
-      - [ ] Teste RED: "should return access_token for valid credentials"
-      - [ ] Teste RED: "should throw UnauthorizedException for invalid email"
-      - [ ] Teste RED: "should throw UnauthorizedException for invalid password"
-      - [ ] Implementação:
-        - Buscar usuário por email e tenantId
-        - Lançar `UnauthorizedException` se não encontrar
-        - Verificar senha com `argon2.verify(storedHash, plainPassword)`
-        - Lançar `UnauthorizedException` se senha inválida
-        - Criar payload JWT: `{ sub: user.id, email: user.email, tenantId: user.tenantId, role: user.role }`
-        - Assinar token com `jwtService.sign(payload)`
-        - Retornar `{ access_token: token }`
-      - [ ] Testes GREEN: Todos passando
-    - [ ] Criar endpoint POST `/auth/login` no AuthController
-      - Adicionar método `login()`
-      - Receber `LoginDto` com `@Body()`
-      - Chamar `authService.login(loginDto)`
-      - Retornar `{ access_token }`
-    - [ ] Teste E2E do Login
-      - Criar usuário no banco (seed com senha conhecida)
-      - POST `/auth/login` com credenciais corretas → 200 + token
-      - POST `/auth/login` com email errado → 401
-      - POST `/auth/login` com senha errada → 401
-      - Validar que token JWT é válido (decodificar payload)
-  - [ ] **1.4.4 Criar JwtStrategy (Passport)**
-    - [ ] Criar pasta `server/src/auth/strategies/`
-    - [ ] Criar arquivo `jwt.strategy.ts`
-      - Importar `PassportStrategy` de `@nestjs/passport`
-      - Importar `Strategy, ExtractJwt` de `passport-jwt`
-      - Estender `PassportStrategy(Strategy)`
-      - Injetar `ConfigService` no constructor
-      - Configurar `super()`:
-        - `jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()`
-        - `ignoreExpiration: false`
-        - `secretOrKey: configService.get('JWT_SECRET')`
-      - Implementar `validate(payload)`:
-        - Recebe payload decodificado do JWT
-        - Retornar objeto do usuário: `{ userId: payload.sub, email: payload.email, tenantId: payload.tenantId, role: payload.role }`
-        - Passport injeta retorno em `req.user` automaticamente
-    - [ ] Criar teste unitário `jwt.strategy.spec.ts`
-      - Mockar `ConfigService`
-      - Testar método `validate()`
-      - Validar que retorna dados corretos do payload
-    - [ ] Registrar `JwtStrategy` como provider no `AuthModule`
-  - [ ] **1.4.5 Testar Autenticação com Guard**
-    - [ ] Criar endpoint de teste protegido
-      - Adicionar método `@Get('profile')` no `AuthController`
-      - Adicionar `@UseGuards(AuthGuard('jwt'))`
-      - Retornar `req.user` (injeta automaticamente)
-    - [ ] Teste E2E de rota protegida
-      - Fazer login → obter token
-      - GET `/auth/profile` SEM token → 401
-      - GET `/auth/profile` com token inválido → 401
-      - GET `/auth/profile` com token válido → 200 + dados do usuário
-      - GET `/auth/profile` com token expirado → 401 (usar mock de tempo)
+- [x] **1.4.2 Testes de Integração do Endpoint de Registro**
+  - [x] Configurar setup global de testes
+  - [x] Criar `server/src/test/setup.ts`
+  - [x] Criar factory `createTestApp()` em `src/test/helpers/test-application.factory.ts`
+  - [x] Configurar limpeza automática do banco (beforeEach com TRUNCATE)
+  - [x] Criar `auth.integration.spec.ts` em `src/auth/`
+  - [x] Teste: POST /auth/register com dados válidos → 201
+  - [x] Teste: POST /auth/register com email duplicado → 409
+  - [x] Teste: POST /auth/register com validação inválida → 400
+  - [x] Validar que senha NÃO aparece na resposta
+  - [x] Validar que usuário foi criado no banco (query direta)
+- [x] **1.4.3 Implementar Login com JWT**
+  - [x] Configurar JwtModule no AuthModule
+    - Importar `JwtModule.registerAsync()`
+    - Injetar `ConfigService` para ler variáveis do `.env`
+    - Configurar `secret: configService.get('JWT_SECRET')`
+    - Configurar `signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') }`
+  - [x] Criar método `login()` no AuthService (TDD)
+    - [x] Teste RED: "should return access_token for valid credentials"
+    - [x] Teste RED: "should throw UnauthorizedException for invalid email"
+    - [x] Teste RED: "should throw UnauthorizedException for invalid password"
+    - [x] Implementação:
+      - Buscar usuário por email e tenantId
+      - Lançar `UnauthorizedException` se não encontrar
+      - Verificar senha com `argon2.verify(storedHash, plainPassword)`
+      - Lançar `UnauthorizedException` se senha inválida
+      - Criar payload JWT: `{ sub: user.id, email: user.email, tenantId: user.tenantId, role: user.role }`
+      - Assinar token com `jwtService.sign(payload)`
+      - Retornar `{ access_token: token }`
+    - [x] Testes GREEN: Todos passando
+  - [x] Criar endpoint POST `/auth/login` no AuthController
+    - Adicionar método `login()`
+    - Receber `LoginDto` com `@Body()`
+    - Chamar `authService.login(loginDto)`
+    - Retornar `{ access_token }`
+  - [x] Teste E2E do Login
+    - Criar usuário no banco (seed com senha conhecida)
+    - POST `/auth/login` com credenciais corretas → 200 + token
+    - POST `/auth/login` com email errado → 401
+    - POST `/auth/login` com senha errada → 401
+    - Validar que token JWT é válido (decodificar payload)
+- [ ] **1.4.4 Criar JwtStrategy (Passport)**
+  - [ ] Criar pasta `server/src/auth/strategies/`
+  - [ ] Criar arquivo `jwt.strategy.ts`
+    - Importar `PassportStrategy` de `@nestjs/passport`
+    - Importar `Strategy, ExtractJwt` de `passport-jwt`
+    - Estender `PassportStrategy(Strategy)`
+    - Injetar `ConfigService` no constructor
+    - Configurar `super()`:
+      - `jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()`
+      - `ignoreExpiration: false`
+      - `secretOrKey: configService.get('JWT_SECRET')`
+    - Implementar `validate(payload)`:
+      - Recebe payload decodificado do JWT
+      - Retornar objeto do usuário: `{ userId: payload.sub, email: payload.email, tenantId: payload.tenantId, role: payload.role }`
+      - Passport injeta retorno em `req.user` automaticamente
+  - [ ] Criar teste unitário `jwt.strategy.spec.ts`
+    - Mockar `ConfigService`
+    - Testar método `validate()`
+    - Validar que retorna dados corretos do payload
+  - [ ] Registrar `JwtStrategy` como provider no `AuthModule`
+- [ ] **1.4.5 Testar Autenticação com Guard**
+  - [ ] Criar endpoint de teste protegido
+    - Adicionar método `@Get('profile')` no `AuthController`
+    - Adicionar `@UseGuards(AuthGuard('jwt'))`
+    - Retornar `req.user` (injeta automaticamente)
+  - [ ] Teste E2E de rota protegida
+    - Fazer login → obter token
+    - GET `/auth/profile` SEM token → 401
+    - GET `/auth/profile` com token inválido → 401
+    - GET `/auth/profile` com token válido → 200 + dados do usuário
+    - GET `/auth/profile` com token expirado → 401 (usar mock de tempo)
 - [ ] 💾 **COMMIT:** `feat: add auth endpoints and jwt strategy`
 - [ ] **1.5 🛡️ Guards RBAC (Controle de Acesso)**
   - [ ] **1.5.1 Criar Decorator @Roles()**
