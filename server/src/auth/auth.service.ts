@@ -1,12 +1,13 @@
 import {
-  Injectable,
   ConflictException,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
-import { RegisterDto, LoginDto } from './dto';
 import * as argon2 from 'argon2';
+import { Role } from '../common/enums/role.enum';
+import { PrismaService } from '../prisma/prisma.service';
+import { LoginDto, RegisterDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +43,7 @@ export class AuthService {
         name,
         tenantId,
         passwordHash,
-        role: 'MEMBER',
+        role: Role.MEMBER,
       },
       select: {
         id: true,

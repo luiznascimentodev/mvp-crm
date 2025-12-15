@@ -44,6 +44,13 @@ model Tenant {
 // 👤 USER (Usuários do Sistema)
 // ============================================================================
 
+// Enums
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
 /// Usuários que acessam o sistema (pertencentes a um Tenant)
 model User {
   id String @id @default(uuid()) @db.Uuid
@@ -61,7 +68,7 @@ model User {
   passwordHash String @db.VarChar(255)
 
   // Permissões
-  role     String  @default("member") @db.VarChar(50)
+  role     Role    @default(MEMBER)
   isActive Boolean @default(true)
 
   // Auditoria

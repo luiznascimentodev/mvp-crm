@@ -27,6 +27,8 @@ async function bootstrap() {
     },
   });
 
+  app.enableCors(); // Habilitar CORS para desenvolvimento (ajustar em produção)
+
   // ← REMOVEMOS app.useGlobalFilters() (vai para AppModule)
 
   app.useGlobalPipes(

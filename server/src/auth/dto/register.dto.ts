@@ -1,19 +1,38 @@
-import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
-  @IsEmail({}, { message: 'Email inválido' })
+  @ApiProperty({
+    example: 'john@example.com',
+    description: 'User email address',
+  })
+  @IsEmail({}, { message: 'Invalid email format' })
   email: string;
 
-  @IsString({ message: 'Senha deve ser uma string' })
-  @MinLength(8, { message: 'Senha deve ter no mínimo 8 caracteres' })
-  @MaxLength(100, { message: 'Senha deve ter no máximo 100 caracteres' })
+  @ApiProperty({
+    example: 'StrongPass123!',
+    description: 'User password',
+    minLength: 8,
+  })
+  @IsString({ message: 'Password must be a string' })
+  @MinLength(8, { message: 'Password must have at least 8 characters' })
+  @MaxLength(100, { message: 'Password must have at most 100 characters' })
   password: string;
 
-  @IsString({ message: 'Nome deve ser uma string' })
-  @MinLength(2, { message: 'Nome deve ter no mínimo 2 caracteres' })
-  @MaxLength(100, { message: 'Nome deve ter no máximo 100 caracteres' })
+  @ApiProperty({
+    example: 'John Doe',
+    description: 'User full name',
+    minLength: 2,
+  })
+  @IsString({ message: 'Name must be a string' })
+  @MinLength(2, { message: 'Name must have at least 2 characters' })
+  @MaxLength(100, { message: 'Name must have at most 100 characters' })
   name: string;
 
-  @IsString({ message: 'TenantId deve ser uma string' })
+  @ApiProperty({
+    example: 'tenant-uuid',
+    description: 'Tenant ID to associate user with',
+  })
+  @IsString({ message: 'TenantId must be a string' })
   tenantId: string;
 }
