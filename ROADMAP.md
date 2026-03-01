@@ -649,16 +649,16 @@
     - Atributos: id, entityType, entityId, fileName, fileSize, mimeType, s3Key, uploadedBy, uploadedAt
     - Relacionamento polimórfico (Deal, Contact, Lead)
 - [ ] 💾 **COMMIT:** `docs: update class diagram with pipeline module`
-- [ ] **3.2 ☁️ Storage Module (S3/MinIO)**
-  - [ ] **3.2.1 Configurar MinIO no Docker Compose**
+- [x] **3.2 ☁️ Storage Module (S3/MinIO)**
+  - [x] **3.2.1 Configurar MinIO no Docker Compose**
     - Adicionar serviço MinIO no `docker-compose.yml`
     - Configurar buckets padrão
     - Variáveis: `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`
-  - [ ] **3.2.2 Instalar AWS SDK**
+  - [x] **3.2.2 Instalar AWS SDK**
     - `npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner --workspace=server`
-  - [ ] **3.2.3 Criar StorageModule**
-    - [ ] Criar `server/src/storage/storage.module.ts`
-    - [ ] Criar `server/src/storage/storage.service.ts`:
+  - [x] **3.2.3 Criar StorageModule**
+    - [x] Criar `server/src/storage/storage.module.ts`
+    - [x] Criar `server/src/storage/storage.service.ts`:
       - Configurar S3Client do AWS SDK
       - Método `generatePresignedUploadUrl(fileName, mimeType, maxSize)`:
         - Validar MIME type (whitelist: images, PDFs, docs)
@@ -672,25 +672,25 @@
         - Retornar URL válida por tempo limitado
       - Método `deleteFile(key)`:
         - Remover arquivo do S3
-  - [ ] **3.2.4 Criar Testes TDD**
+  - [x] **3.2.4 Criar Testes TDD**
     - Mockar S3Client
     - Teste: Gera URL de upload válida
     - Teste: Rejeita MIME type inválido
     - Teste: Rejeita arquivo muito grande
     - Teste: Gera URL de download
-  - [ ] **3.2.5 Criar StorageController**
+  - [x] **3.2.5 Criar StorageController**
     - `POST /storage/upload-url` → Retorna presigned URL
     - `GET /storage/download-url/:key` → Retorna download URL
     - Aplicar `@UseGuards(JwtAuthGuard)`
-  - [ ] **3.2.6 Criar Schema Attachment no Prisma**
+  - [x] **3.2.6 Criar Schema Attachment no Prisma**
     - Adicionar model `Attachment`
     - Migration
-- [ ] 💾 **COMMIT:** `feat: secure storage module`
-- [ ] **3.3 Backend: WebSockets (Real-time)**
-  - [ ] **3.3.1 Instalar Socket.io**
+- [x] 💾 **COMMIT:** `feat: secure storage module`
+- [x] **3.3 Backend: WebSockets (Real-time)**
+  - [x] **3.3.1 Instalar Socket.io**
     - `npm install @nestjs/websockets @nestjs/platform-socket.io socket.io --workspace=server`
-  - [ ] **3.3.2 Criar EventsGateway**
-    - [ ] Criar `server/src/events/events.gateway.ts`
+  - [x] **3.3.2 Criar EventsGateway**
+    - [x] Criar `server/src/events/events.gateway.ts`
       - `@WebSocketGateway()` com CORS configurado
       - Implementar `OnGatewayConnection`, `OnGatewayDisconnect`
       - Autenticar conexão via JWT:
@@ -698,15 +698,15 @@
         - Validar JWT
         - Armazenar `userId` e `tenantId` em `socket.data`
       - Criar sala por tenant: `socket.join(tenantId)`
-    - [ ] Evento `deal.moved`:
+    - [x] Evento `deal.moved`:
       - Listener: `@SubscribeMessage('deal.moved')`
       - Payload: `{ dealId, fromStage, toStage, userId }`
       - Validar que usuário pode mover o deal
       - Atualizar deal no banco
       - Emitir para todos no tenant: `server.to(tenantId).emit('deal.updated', payload)`
-    - [ ] Evento `deal.created`:
+    - [x] Evento `deal.created`:
       - Broadcast criação de novo deal
-    - [ ] Evento `deal.deleted`:
+    - [x] Evento `deal.deleted`:
       - Broadcast remoção de deal
   - [ ] **3.3.3 Criar Testes E2E de WebSocket**
     - Configurar cliente Socket.io no teste
@@ -714,29 +714,29 @@
     - Teste: Rejeita conexão sem JWT
     - Teste: Recebe evento ao mover deal
     - Teste: Isolamento por tenant (tenant A não vê eventos do B)
-- [ ] 💾 **COMMIT:** `feat: websocket gateway`
-- [ ] **3.4 Frontend: Kanban Board**
-  - [ ] **3.4.1 Instalar Dependências**
+- [x] 💾 **COMMIT:** `feat: websocket gateway`
+- [x] **3.4 Frontend: Kanban Board**
+  - [x] **3.4.1 Instalar Dependências**
     - `npm install @dnd-kit/core @dnd-kit/sortable socket.io-client --workspace=web`
     - `npx shadcn@latest add card badge --workspace=web`
-  - [ ] **3.4.2 Criar Página Pipeline**
-    - [ ] Criar `web/src/pages/pipeline/pipeline.tsx`
+  - [x] **3.4.2 Criar Página Pipeline**
+    - [x] Criar `web/src/pages/pipeline/pipeline.tsx`
       - Layout de colunas (stages): LEAD, QUALIFICATION, PROPOSAL, etc.
       - Listar deals em cada coluna
       - Exibir: Título, Valor, Contato, Probabilidade
-  - [ ] **3.4.3 Implementar Drag & Drop**
-    - [ ] Configurar `DndContext` do @dnd-kit
+  - [x] **3.4.3 Implementar Drag & Drop**
+    - [x] Configurar `DndContext` do @dnd-kit
       - Callback `onDragEnd()`:
         - Otimistic update (mover card visualmente)
         - Emitir evento WebSocket `deal.moved`
         - Rollback se falhar
       - Sortable por coluna
-    - [ ] Criar componente `<DealCard>`
+    - [x] Criar componente `<DealCard>`
       - Draggable com `useSortable()`
       - Exibir informações do deal
       - Botão de editar (abre dialog)
-  - [ ] **3.4.4 Integrar WebSocket no Frontend**
-    - [ ] Criar `web/src/hooks/use-socket.ts`
+  - [x] **3.4.4 Integrar WebSocket no Frontend**
+    - [x] Criar `web/src/hooks/use-socket.ts`
       - Conectar ao servidor Socket.io
       - Enviar JWT no handshake
       - Listeners:
@@ -744,14 +744,14 @@
         - `deal.created` → Adicionar à lista
         - `deal.deleted` → Remover da lista
       - Reconnection automática
-    - [ ] Usar hook na página Pipeline
+    - [x] Usar hook na página Pipeline
       - Sincronização real-time entre usuários
-  - [ ] **3.4.5 Implementar Upload de Anexos**
-    - [ ] Criar componente `<FileUpload>`
+  - [x] **3.4.5 Implementar Upload de Anexos**
+    - [x] Criar componente `<FileUpload>`
       - Input de arquivo (drag & drop ou clique)
       - Validar MIME e tamanho no frontend
       - Preview de imagens
-    - [ ] Fluxo de upload:
+    - [x] Fluxo de upload:
       1. Usuário seleciona arquivo
       2. Frontend chama `POST /storage/upload-url`
       3. Backend retorna presigned URL
@@ -766,8 +766,8 @@
     - Teste: Outro usuário vê atualização em tempo real
     - Teste: Upload de anexo
     - Teste: Download de anexo
-- [ ] 💾 **COMMIT:** `feat(web): kanban board with sync and uploads`
-- [ ] 🏷️ **TAG:** `git tag -a v0.4.0 -m "Milestone 3: Pipeline & Storage"`
+- [x] 💾 **COMMIT:** `feat(web): kanban board with sync and uploads`
+- [x] 🏷️ **TAG:** `git tag -a v0.4.0 -m "Milestone 3: Pipeline & Storage"`
 
 ---
 
