@@ -12,6 +12,7 @@ import { EventsModule } from './events/events.module';
 import { QueuesModule } from './queues/queues.module';
 import { TeamModule } from './team/team.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { PrismaModule } from './prisma/prisma.module';
     EventsModule,
     QueuesModule,
     TeamModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
