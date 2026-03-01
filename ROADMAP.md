@@ -869,9 +869,9 @@
 
 **Objetivo:** Qualidade final e Dashboards.
 
-- [ ] **5.1 Backend: Dashboard (Agregações)**
-  - [ ] **5.1.1 Criar DashboardService**
-    - [ ] Criar `server/src/dashboard/dashboard.service.ts`
+- [x] **5.1 Backend: Dashboard (Agregações)**
+  - [x] **5.1.1 Criar DashboardService**
+    - [x] Criar `server/src/dashboard/dashboard.service.ts`
       - Método `getMetrics(userId, tenantId, dateRange)`:
         - Total de contatos (filtrado por tenant)
         - Total de deals
@@ -889,85 +889,85 @@
       - Método `getConversionFunnel(tenantId)`:
         - Contar deals em cada stage
         - Calcular % de conversão entre stages
-  - [ ] **5.1.2 Usar Agregações do Prisma**
+  - [x] **5.1.2 Usar Agregações do Prisma**
     - Exemplo: `prisma.deal.groupBy({ by: ['stage'], _count: true, _sum: { value: true } })`
     - Otimizar queries (evitar N+1)
     - Adicionar indexes no Prisma
-  - [ ] **5.1.3 Criar DashboardController**
+  - [x] **5.1.3 Criar DashboardController**
     - `GET /dashboard/metrics` → Retorna KPIs
     - `GET /dashboard/deals-over-time` → Série temporal
     - `GET /dashboard/top-performers` → Ranking
     - `GET /dashboard/funnel` → Funil de conversão
     - Aplicar `@UseGuards(JwtAuthGuard)`
     - Cache com Redis (15 minutos)
-  - [ ] **5.1.4 Testes TDD**
+  - [x] **5.1.4 Testes TDD**
     - Mockar Prisma
     - Teste: Calcula métricas corretamente
     - Teste: Filtra por tenant
     - Teste: Respeita RBAC (member vê apenas seus dados)
-- [ ] 💾 **COMMIT:** `feat: dashboard aggregations`
-- [ ] **5.2 Frontend: Charts (Visualizações)**
-  - [ ] **5.2.1 Instalar Recharts**
+- [x] 💾 **COMMIT:** `feat: dashboard aggregations`
+- [x] **5.2 Frontend: Charts (Visualizações)**
+  - [x] **5.2.1 Instalar Recharts**
     - `npm install recharts --workspace=web`
-  - [ ] **5.2.2 Criar Página Dashboard**
-    - [ ] Criar `web/src/pages/dashboard/dashboard.tsx`
+  - [x] **5.2.2 Criar Página Dashboard**
+    - [x] Criar `web/src/pages/dashboard/dashboard-page.tsx`
       - Grid responsivo (4 colunas)
       - Cards de KPIs: Total Contatos, Deals, Taxa Conversão, Valor Pipeline
       - Gráfico de linha: Deals ao longo do tempo
       - Gráfico de barras: Deals por stage
       - Tabela: Top performers
-  - [ ] **5.2.3 Criar Componentes de Charts**
-    - [ ] `<MetricCard>`: Card com título, valor, variação (+/- %)
-    - [ ] `<LineChart>`: Recharts LineChart configurado
-    - [ ] `<BarChart>`: Recharts BarChart configurado
-    - [ ] `<FunnelChart>`: Visualização de funil customizada
-  - [ ] **5.2.4 Integrar API**
+  - [x] **5.2.3 Criar Componentes de Charts**
+    - [x] `<MetricCard>`: Card com título, valor, variação (+/- %)
+    - [x] `<LineChart>`: Recharts LineChart configurado
+    - [x] `<BarChart>`: Recharts BarChart configurado
+    - [x] `<FunnelChart>`: Visualização de funil customizada
+  - [x] **5.2.4 Integrar API**
     - Criar hook `use-dashboard.ts`
     - Fetch de dados via SDK
     - Loading skeletons
     - Error handling
-  - [ ] **5.2.5 Filtros de Data**
+  - [x] **5.2.5 Filtros de Data**
     - Componente `<DateRangePicker>`
     - Opções: Hoje, 7 dias, 30 dias, 90 dias, Custom
     - Refetch ao mudar filtro
-- [ ] 💾 **COMMIT:** `feat(web): analytics dashboard`
-- [ ] **5.3 🧪 Testes E2E Completos (Playwright)**
-  - [ ] **5.3.1 Configurar Playwright no Backend**
+- [x] 💾 **COMMIT:** `feat(web): analytics dashboard`
+- [x] **5.3 🧪 Testes E2E Completos (Playwright)**
+  - [x] **5.3.1 Configurar Playwright no Backend**
     - Criar `server/test/e2e/setup.ts`
     - Configurar banco de testes (separado)
     - Seed de dados de teste
-  - [ ] **5.3.2 Criar Testes de Autenticação**
-    - [ ] `server/test/e2e/auth.e2e.spec.ts`
+  - [x] **5.3.2 Criar Testes de Autenticação**
+    - [x] `server/test/e2e/auth.e2e.spec.ts`
       - Teste: Registro de usuário
       - Teste: Login com credenciais corretas
       - Teste: Login com credenciais erradas → 401
       - Teste: Acesso a rota protegida sem token → 401
       - Teste: Acesso a rota protegida com token → 200
-  - [ ] **5.3.3 Criar Testes de Fluxo Completo**
-    - [ ] `server/test/e2e/crm.e2e.spec.ts`
+  - [x] **5.3.3 Criar Testes de Fluxo Completo**
+    - [x] `server/test/e2e/crm.e2e.spec.ts`
       - Cenário: Criar lead → Qualificar → Criar contact → Criar deal → Mover pipeline → Fechar negócio
       - Validar cada etapa
       - Validar audit logs criados
-  - [ ] **5.3.4 Criar Testes de RBAC**
-    - [ ] `server/test/e2e/rbac.e2e.spec.ts`
+  - [x] **5.3.4 Criar Testes de RBAC**
+    - [x] `server/test/e2e/rbac.e2e.spec.ts`
       - Teste: Member não acessa lead de outro → 403
       - Teste: Admin acessa todos leads → 200
       - Teste: Owner pode deletar qualquer recurso
-  - [ ] **5.3.5 Configurar Playwright no Frontend**
+  - [x] **5.3.5 Configurar Playwright no Frontend**
     - Testes já iniciados no Milestone 2
     - Expandir cobertura
-  - [ ] **5.3.6 Criar Testes de Jornada do Usuário**
-    - [ ] `web/tests/user-journey.spec.ts`
+  - [x] **5.3.6 Criar Testes de Jornada do Usuário**
+    - [x] `web/tests/dashboard.spec.ts`
       - Login → Dashboard → Ver métricas
       - Criar contato → Criar deal → Mover kanban
       - Upload de anexo
       - Convidar membro
-  - [ ] **5.3.7 Configurar CI para E2E**
+  - [x] **5.3.7 Configurar CI para E2E**
     - Rodar testes em headless mode
     - Gerar relatórios HTML
     - Armazenar screenshots de falhas
-- [ ] 💾 **COMMIT:** `test: playwright e2e scenarios`
-- [ ] 🏷️ **TAG:** `git tag -a v0.5.0 -m "Milestone 5: Dashboard & QA"`
+- [x] 💾 **COMMIT:** `test: playwright e2e scenarios`
+- [x] 🏷️ **TAG:** `git tag -a v0.5.0 -m "Milestone 5: Dashboard & QA"`
 
 ---
 
