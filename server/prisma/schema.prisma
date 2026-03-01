@@ -31,11 +31,12 @@ model Tenant {
   updatedAt DateTime @updatedAt @db.Timestamptz
 
   // Relacionamentos
-  users      User[]
-  leads      Lead[]
-  contacts   Contact[]
-  deals      Deal[]
-  activities Activity[]
+  users       User[]
+  leads       Lead[]
+  contacts    Contact[]
+  deals       Deal[]
+  activities  Activity[]
+  auditLogs   AuditLog[]
 
   @@map("tenants")
 }
@@ -80,6 +81,7 @@ model User {
   ownedContacts     Contact[]  @relation("ContactOwner")
   ownedDeals        Deal[]     @relation("DealOwner")
   createdActivities Activity[] @relation("ActivityCreator")
+  auditLogs         AuditLog[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -293,4 +295,48 @@ model Activity {
   @@index([scheduledAt])
   @@index([deletedAt])
   @@map("activities")
+}
+
+// ============================================================================
+// 📝 AUDIT LOG (Rastreabilidade)
+// ============================================================================
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+/// Registro imutável de todas as operações de escrita no sistema
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Contexto Multi-tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Quem fez a ação
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // O que foi feito
+  action   AuditAction
+  entity   String      @db.VarChar(100) // "Contact", "Lead", "Deal"
+  entityId String      @db.Uuid
+
+  // Diff do que mudou (before/after)
+  changes Json?
+
+  // Contexto da requisição
+  ip String? @db.VarChar(45) // suporta IPv6
+
+  // Auditoria (imutável — sem updatedAt)
+  timestamp DateTime @default(now()) @db.Timestamptz
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
 }

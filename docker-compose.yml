@@ -6,7 +6,7 @@ services:
     image: postgres:17-alpine # Versão leve (Alpine) e atualizada (17)
     container_name: orbit_postgres
     ports:
-      - '5432:5432' # Libera a porta 5432 do container para o seu PC
+      - '5433:5432' # 5432 pode estar em uso por outro projeto local
     environment:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
@@ -32,7 +32,7 @@ services:
     container_name: orbit_minio
     ports:
       - '9000:9000' # Porta da API (onde o backend conecta)
-      - '9001:9001' # Porta do Console Web (onde você vê os arquivos no navegador)
+      - '9002:9001' # Porta do Console Web (onde você vê os arquivos no navegador)
     environment:
       MINIO_ROOT_USER: docker
       MINIO_ROOT_PASSWORD: docker123

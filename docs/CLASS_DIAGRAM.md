@@ -1,6 +1,6 @@
 # 🏗️ Diagrama de Classes - Core Domain (SaaS Architecture)
 
-Este diagrama representa a estrutura Multi-tenant N:N do Orbit CRM, permitindo que um usuário pertença a múltiplas organizações com papéis diferentes.
+Este diagrama representa a estrutura Multi-tenant do Orbit CRM com entidades de CRM, auditoria e controle de acesso.
 
 ```mermaid
 classDiagram
@@ -9,122 +9,155 @@ classDiagram
         <<enumeration>>
         OWNER
         ADMIN
-        MANAGER
-        SELLER
-        VIEWER
+        MEMBER
     }
 
-    class SubscriptionPlan {
+    class AuditAction {
         <<enumeration>>
-        FREE
-        PRO
-        ENTERPRISE
-    }
-
-    class InviteStatus {
-        <<enumeration>>
-        PENDING
-        ACCEPTED
-        REJECTED
-        EXPIRED
-    }
-
-    class MemberStatus {
-        <<enumeration>>
-        ACTIVE
-        SUSPENDED
-        INACTIVE
+        CREATE
+        UPDATE
+        DELETE
     }
 
     %% CORE ENTITIES
 
+    class Tenant {
+        +UUID id
+        +String name
+        +String slug
+        +String plan
+        +Boolean isActive
+        +Int maxUsers
+        +Int maxLeads
+        +DateTime createdAt
+        +DateTime updatedAt
+    }
+    %% Organização/empresa no sistema SaaS
+
     class User {
         +UUID id
+        +UUID tenantId
         +String email
         +String passwordHash
         +String name
         +String avatarUrl
-        +String phone
-        +DateTime emailVerifiedAt
-        +DateTime createdAt
-        +DateTime updatedAt
-        +DateTime deletedAt
-    }
-    %% Identidade global do usuário (Login)
-
-    class Organization {
-        +UUID id
-        +String name
-        +String slug
-        +String documentCNPJ
-        +String domain
-        +SubscriptionPlan plan
-        +String logoUrl
-        +String stripeCustomerId
-        +String stripeSubscriptionId
-        +DateTime trialEndsAt
-        +Int maxUsers
+        +Role role
         +Boolean isActive
         +DateTime createdAt
         +DateTime updatedAt
     }
-    %% O Tenant (Conta Pagante)
+    %% Usuário que acessa o sistema
 
-    class Member {
+    class Contact {
         +UUID id
-        +UUID userId
-        +UUID organizationId
-        +Role role
-        +MemberStatus status
-        +DateTime joinedAt
+        +UUID tenantId
+        +UUID ownerId
+        +String name
+        +String email
+        +String phone
+        +String company
+        +String position
+        +String website
+        +String linkedin
+        +String address
+        +String city
+        +String state
+        +String country
+        +String notes
         +DateTime createdAt
         +DateTime updatedAt
+        +DateTime deletedAt
     }
-    %% Tabela Pivô (Vínculo User <-> Organization)
+    %% Contato qualificado (ex-Lead convertido)
 
-    class Invite {
+    class Lead {
         +UUID id
+        +UUID tenantId
+        +UUID ownerId
+        +String name
         +String email
-        +Role role
-        +UUID organizationId
-        +UUID invitedBy
-        +UUID acceptedBy
-        +String token
-        +InviteStatus status
-        +DateTime expiresAt
-        +DateTime acceptedAt
+        +String phone
+        +String company
+        +String source
+        +String status
+        +String notes
         +DateTime createdAt
-        +DateTime revokedAt
+        +DateTime updatedAt
+        +DateTime deletedAt
     }
-    %% Convites pendentes
+    %% Prospect não qualificado
+
+    class Deal {
+        +UUID id
+        +UUID tenantId
+        +UUID ownerId
+        +UUID contactId
+        +String title
+        +String description
+        +Decimal value
+        +String currency
+        +String stage
+        +Int probability
+        +DateTime expectedCloseDate
+        +Boolean isActive
+        +String lostReason
+        +DateTime closedAt
+        +DateTime createdAt
+        +DateTime updatedAt
+        +DateTime deletedAt
+    }
+    %% Oportunidade de venda com valor monetário
+
+    class Activity {
+        +UUID id
+        +UUID tenantId
+        +UUID createdById
+        +UUID leadId
+        +UUID contactId
+        +UUID dealId
+        +String type
+        +String subject
+        +String description
+        +DateTime scheduledAt
+        +DateTime completedAt
+        +Boolean isCompleted
+        +Int durationMinutes
+        +DateTime createdAt
+        +DateTime updatedAt
+        +DateTime deletedAt
+    }
+    %% Interações polimórficas (call, email, meeting, task, note)
 
     class AuditLog {
         +UUID id
-        +UUID organizationId
         +UUID userId
-        +String action
+        +UUID tenantId
+        +AuditAction action
         +String entity
         +UUID entityId
-        +JSON metadata
-        +String ipAddress
-        +String userAgent
-        +DateTime createdAt
+        +JSON changes
+        +String ip
+        +DateTime timestamp
     }
-    %% Rastreabilidade de segurança
+    %% Rastreabilidade de segurança (imutável)
 
     %% RELACIONAMENTOS
-    User "1" --> "*" Member : participa como
-    Organization "1" --> "*" Member : possui membros
-    Member --> Role : tem papel específico
-    Member --> MemberStatus : possui status
+    Tenant "1" --> "*" User : possui
+    Tenant "1" --> "*" Contact : possui
+    Tenant "1" --> "*" Lead : possui
+    Tenant "1" --> "*" Deal : possui
+    Tenant "1" --> "*" Activity : possui
+    Tenant "1" --> "*" AuditLog : possui histórico
 
-    Organization "1" --> "*" Invite : gera convites
-    User "1" --> "*" Invite : enviou (invitedBy)
-    User "0..1" --> "*" Invite : aceitou (acceptedBy)
-    Invite --> InviteStatus : possui status
-
-    Organization "1" --> "*" AuditLog : possui histórico
+    User --> Role : tem papel
+    User "1" --> "*" Contact : é dono de (ownerId)
+    User "1" --> "*" Lead : é dono de (ownerId)
+    User "1" --> "*" Deal : é dono de (ownerId)
+    User "1" --> "*" Activity : criou
     User "1" --> "*" AuditLog : executou ações
 
-    Organization ..> SubscriptionPlan : possui plano
+    Contact "1" --> "*" Deal : gera oportunidades
+    Contact "0..1" --> "*" Activity : possui atividades
+    Lead "0..1" --> "*" Activity : possui atividades
+    Deal "0..1" --> "*" Activity : possui atividades
 ```
