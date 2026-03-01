@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts'],
     setupFiles: ['./src/test/setup.ts'],
+    // Arquivos de integração compartilham o mesmo banco — execução serial
+    // evita race conditions entre suites que fazem TRUNCATE no beforeEach
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

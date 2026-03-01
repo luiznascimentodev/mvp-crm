@@ -149,10 +149,10 @@ model Contact {
   owner   User?   @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: SetNull)
 
   // Informações Básicas
-  name    String @db.VarChar(255)
-  email   String @db.VarChar(255)
-  phone   String @db.VarChar(50)
-  company String @db.VarChar(255)
+  name    String  @db.VarChar(255)
+  email   String  @db.VarChar(255)
+  phone   String? @db.VarChar(50)
+  company String? @db.VarChar(255)
 
   // Informações Adicionais
   position String? @db.VarChar(100)
