@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ProtectedRoute } from '@/components/protected-route';
 import { DashboardLayout } from '@/layouts/dashboard-layout';
 import { LoginPage } from '@/pages/login';
-import { DashboardPage } from '@/pages/dashboard';
+import { DashboardPage } from '@/pages/dashboard/dashboard-page';
 import { ContactsPage } from '@/pages/contacts/contacts-page';
 import { PipelinePage } from '@/pages/pipeline/pipeline-page';
 import { TeamPage } from '@/pages/team/team-page';
