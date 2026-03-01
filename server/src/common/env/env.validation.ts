@@ -17,6 +17,17 @@ export const envSchema = z.object({
     .regex(/^\d+[smhd]$/, 'JWT_EXPIRES_IN must be in format: 60s, 15m, 1h, 7d')
     .default('1h')
     .describe('JWT token expiration time'),
+
+  // Storage (MinIO / S3)
+  STORAGE_ENDPOINT: z.string().url().describe('S3/MinIO endpoint URL'),
+  STORAGE_REGION: z.string().default('us-east-1'),
+  STORAGE_ACCESS_KEY: z.string().min(1),
+  STORAGE_SECRET_KEY: z.string().min(1),
+  STORAGE_BUCKET: z.string().min(1).default('orbit-crm'),
+
+  // Redis
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.coerce.number().int().positive().default(6379),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -19,6 +19,16 @@ classDiagram
         DELETE
     }
 
+    class DealStage {
+        <<enumeration>>
+        PROSPECTING
+        QUALIFICATION
+        PROPOSAL
+        NEGOTIATION
+        CLOSED_WON
+        CLOSED_LOST
+    }
+
     %% CORE ENTITIES
 
     class Tenant {
@@ -96,7 +106,7 @@ classDiagram
         +String description
         +Decimal value
         +String currency
-        +String stage
+        +DealStage stage
         +Int probability
         +DateTime expectedCloseDate
         +Boolean isActive
@@ -141,6 +151,20 @@ classDiagram
     }
     %% Rastreabilidade de segurança (imutável)
 
+    class Attachment {
+        +UUID id
+        +UUID tenantId
+        +String entityType
+        +UUID entityId
+        +String fileName
+        +Int fileSize
+        +String mimeType
+        +String s3Key
+        +UUID uploadedBy
+        +DateTime uploadedAt
+    }
+    %% Anexos polimórficos (Deal, Contact, Lead)
+
     %% RELACIONAMENTOS
     Tenant "1" --> "*" User : possui
     Tenant "1" --> "*" Contact : possui
@@ -160,4 +184,11 @@ classDiagram
     Contact "0..1" --> "*" Activity : possui atividades
     Lead "0..1" --> "*" Activity : possui atividades
     Deal "0..1" --> "*" Activity : possui atividades
+
+    Deal --> DealStage : usa stage
+    Tenant "1" --> "*" Attachment : armazena
+    User "1" --> "*" Attachment : fez upload
+    Deal "1" --> "*" Attachment : possui anexos
+    Contact "1" --> "*" Attachment : possui anexos
+    Lead "1" --> "*" Attachment : possui anexos
 ```

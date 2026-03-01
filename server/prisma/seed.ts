@@ -13,7 +13,7 @@
  *  - Por tenant: 30 Activities (distribuídas entre leads/contacts/deals)
  */
 
-import { PrismaClient, Role } from '@prisma/client';
+import { DealStage, PrismaClient, Role } from '@prisma/client';
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as argon2 from 'argon2';
 
@@ -34,14 +34,7 @@ const LEAD_SOURCES = [
   'event',
   'email_campaign',
 ];
-const DEAL_STAGES = [
-  'prospecting',
-  'qualification',
-  'proposal',
-  'negotiation',
-  'closed_won',
-  'closed_lost',
-];
+const DEAL_STAGES = Object.values(DealStage);
 const ACTIVITY_TYPES = ['call', 'email', 'meeting', 'task', 'note'];
 const CURRENCIES = ['BRL', 'USD', 'EUR'];
 
@@ -154,9 +147,9 @@ async function main() {
       Array.from({ length: 10 }, () => {
         const stage = pick(DEAL_STAGES);
         const probability =
-          stage === 'closed_won'
+          stage === DealStage.CLOSED_WON
             ? 100
-            : stage === 'closed_lost'
+            : stage === DealStage.CLOSED_LOST
               ? 0
               : faker.number.int({ min: 10, max: 90 });
 
@@ -174,10 +167,12 @@ async function main() {
             stage,
             probability,
             expectedCloseDate: faker.date.future(),
-            isActive: !['closed_won', 'closed_lost'].includes(stage),
-            closedAt: ['closed_won', 'closed_lost'].includes(stage)
-              ? faker.date.recent()
-              : null,
+            isActive:
+              stage !== DealStage.CLOSED_WON && stage !== DealStage.CLOSED_LOST,
+            closedAt:
+              stage === DealStage.CLOSED_WON || stage === DealStage.CLOSED_LOST
+                ? faker.date.recent()
+                : null,
           },
         });
       }),

@@ -37,6 +37,7 @@ model Tenant {
   deals       Deal[]
   activities  Activity[]
   auditLogs   AuditLog[]
+  attachments Attachment[]
 
   @@map("tenants")
 }
@@ -50,6 +51,15 @@ enum Role {
   OWNER
   ADMIN
   MEMBER
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
 }
 
 /// Usuários que acessam o sistema (pertencentes a um Tenant)
@@ -77,11 +87,12 @@ model User {
   updatedAt DateTime @updatedAt @db.Timestamptz
 
   // Relacionamentos
-  ownedLeads        Lead[]     @relation("LeadOwner")
-  ownedContacts     Contact[]  @relation("ContactOwner")
-  ownedDeals        Deal[]     @relation("DealOwner")
-  createdActivities Activity[] @relation("ActivityCreator")
+  ownedLeads        Lead[]       @relation("LeadOwner")
+  ownedContacts     Contact[]    @relation("ContactOwner")
+  ownedDeals        Deal[]       @relation("DealOwner")
+  createdActivities Activity[]   @relation("ActivityCreator")
   auditLogs         AuditLog[]
+  attachments       Attachment[] @relation("AttachmentUploader")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -214,7 +225,7 @@ model Deal {
   currency String  @default("BRL") @db.VarChar(3) // ISO 4217 (BRL, USD, EUR)
 
   // Pipeline
-  stage             String    @db.VarChar(50) // "prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"
+  stage             DealStage @default(PROSPECTING)
   probability       Int       @default(0) // 0-100%
   expectedCloseDate DateTime? @db.Date
 
@@ -298,7 +309,41 @@ model Activity {
 }
 
 // ============================================================================
-// 📝 AUDIT LOG (Rastreabilidade)
+// � ATTACHMENT (Anexos)
+// ============================================================================
+
+/// Arquivo anexado a um deal, contato ou lead (armazenado no MinIO/S3)
+model Attachment {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Contexto Multi-tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Quem enviou
+  uploadedById String @db.Uuid
+  uploadedBy   User   @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  // Entidade polimórfica
+  entityType String @db.VarChar(50)  // "deal", "contact", "lead"
+  entityId   String @db.Uuid
+
+  // Metadados do arquivo
+  fileName String  @db.VarChar(255)
+  fileSize Int                       // bytes
+  mimeType String  @db.VarChar(100)
+  s3Key    String  @db.VarChar(512)  // caminho no MinIO/S3
+
+  // Timestamp
+  uploadedAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@map("attachments")
+}
+
+// ============================================================================
+// �📝 AUDIT LOG (Rastreabilidade)
 // ============================================================================
 
 enum AuditAction {

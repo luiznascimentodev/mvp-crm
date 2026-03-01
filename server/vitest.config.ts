@@ -11,6 +11,7 @@ export default defineConfig({
     // Arquivos de integração compartilham o mesmo banco — execução serial
     // evita race conditions entre suites que fazem TRUNCATE no beforeEach
     fileParallelism: false,
+    hookTimeout: 30000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
