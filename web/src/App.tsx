@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/layouts/dashboard-layout';
 import { LoginPage } from '@/pages/login';
 import { DashboardPage } from '@/pages/dashboard';
 import { ContactsPage } from '@/pages/contacts/contacts-page';
+import { PipelinePage } from '@/pages/pipeline/pipeline-page';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +24,7 @@ export default function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/pipeline" element={<PipelinePage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
@@ -33,4 +35,3 @@ export default function App() {
     </QueryClientProvider>
   );
 }
-export default App;

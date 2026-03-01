@@ -23,7 +23,7 @@ import { useState } from 'react';
 const nav = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Contatos', to: '/contacts', icon: Users },
-  { label: 'Deals', to: '/deals', icon: Handshake },
+  { label: 'Pipeline', to: '/pipeline', icon: Handshake },
 ];
 
 export function DashboardLayout() {
