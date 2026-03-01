@@ -358,24 +358,24 @@
 
 **Objetivo:** CRUD, Dados Fakes e Interface.
 
-- [ ] **2.1 📊 Atualizar Diagrama de Classes**
-  - [ ] **2.1.1 Modelar Entidade Contact**
+- [x] **2.1 📊 Atualizar Diagrama de Classes**
+  - [x] **2.1.1 Modelar Entidade Contact**
     - Adicionar classe `Contact` no diagrama UML
     - Atributos: id, tenantId, email, name, phone, company, position, ownerId, createdAt, updatedAt, deletedAt
     - Relacionamentos: `Contact` N:1 `User` (owner)
     - Relacionamentos: `Contact` N:1 `Tenant`
-  - [ ] **2.1.2 Modelar Entidade AuditLog**
+  - [x] **2.1.2 Modelar Entidade AuditLog**
     - Adicionar classe `AuditLog` no diagrama
     - Atributos: id, userId, action, entity, entityId, changes (JSON), timestamp, ip
     - Relacionamento: `AuditLog` N:1 `User` (quem fez a ação)
-  - [ ] **2.1.3 Atualizar Relacionamentos**
+  - [x] **2.1.3 Atualizar Relacionamentos**
     - Conectar `Contact` com `User` (ownerId)
     - Conectar `AuditLog` com todas entidades (polimórfico)
     - Validar multiplicidades
-- [ ] 💾 **COMMIT:** `docs: update class diagram with contacts module`
-- [ ] **2.2 📐 Modelagem de Auditoria (Prisma)**
-  - [ ] **2.2.1 Criar Schema AuditLog**
-    - [ ] Adicionar model `AuditLog` no `schema.prisma`
+- [x] 💾 **COMMIT:** `docs: update class diagram with contacts module`
+- [x] **2.2 📐 Modelagem de Auditoria (Prisma)**
+  - [x] **2.2.1 Criar Schema AuditLog**
+    - [x] Adicionar model `AuditLog` no `schema.prisma`
       - Campo `id`: String @id @default(cuid())
       - Campo `userId`: String (quem fez a ação)
       - Campo `action`: Enum (`CREATE`, `UPDATE`, `DELETE`)
@@ -386,17 +386,17 @@
       - Campo `timestamp`: DateTime @default(now())
       - Relação com `User`: user User @relation(fields: [userId], references: [id])
       - Index em userId, entity, timestamp
-  - [ ] **2.2.2 Criar Migration**
+  - [x] **2.2.2 Criar Migration**
     - Executar `npx prisma migrate dev --name add-audit-log`
     - Validar SQL gerado
     - Aplicar migration no banco
-  - [ ] **2.2.3 Gerar Prisma Client**
+  - [x] **2.2.3 Gerar Prisma Client**
     - Executar `npx prisma generate`
     - Validar tipos TypeScript
-- [ ] 💾 **COMMIT:** `feat: add audit log schema`
-- [ ] **2.3 📐 Auditoria (AOP com Interceptor)**
-  - [ ] **2.3.1 Criar AuditInterceptor**
-    - [ ] Criar `server/src/common/interceptors/audit.interceptor.ts`
+- [x] 💾 **COMMIT:** `feat: add audit log schema`
+- [x] **2.3 📐 Auditoria (AOP com Interceptor)**
+  - [x] **2.3.1 Criar AuditInterceptor**
+    - [x] Criar `server/src/common/interceptors/audit.interceptor.ts`
       - Implementar `NestInterceptor`
       - Injetar `PrismaService`
       - Injetar `Reflector` (para ler metadata)
@@ -407,85 +407,85 @@
         - Calcular diff (comparar before/after)
         - Criar registro no `AuditLog`
         - Retornar resultado original
-    - [ ] Criar decorator `@Audit()` customizado
+    - [x] Criar decorator `@Audit()` customizado
       - `server/src/common/decorators/audit.decorator.ts`
       - Usar `SetMetadata` para marcar métodos auditáveis
       - Aceitar parâmetro `entity: string`
-  - [ ] **2.3.2 Criar Testes do Interceptor**
+  - [x] **2.3.2 Criar Testes do Interceptor**
     - Mockar `PrismaService`
     - Teste: Cria log ao criar entidade
     - Teste: Cria log ao atualizar entidade
     - Teste: Cria log ao deletar entidade
     - Teste: Não cria log se método não tem `@Audit()`
-  - [ ] **2.3.3 Integrar com Controllers**
+  - [x] **2.3.3 Integrar com Controllers**
     - Adicionar `@UseInterceptors(AuditInterceptor)` em ContactsController
     - Adicionar `@Audit('Contact')` nos métodos create/update/delete
     - Testar criação de logs automaticamente
-- [ ] 💾 **COMMIT:** `feat: implement audit log interceptor`
-- [ ] **2.4 Backend: Contacts Module (TDD)**
-  - [ ] **2.4.1 Estrutura do Módulo**
-    - [ ] Criar pasta `server/src/contacts/`
-    - [ ] Criar `contacts.module.ts`
-    - [ ] Criar `contacts.service.ts`
-    - [ ] Criar `contacts.controller.ts`
-    - [ ] Registrar `ContactsModule` no `AppModule`
-  - [ ] **2.4.2 DTOs de Validação**
-    - [ ] Criar pasta `server/src/contacts/dto/`
-    - [ ] Criar `create-contact.dto.ts`:
+- [x] 💾 **COMMIT:** `feat: implement audit log interceptor`
+- [x] **2.4 Backend: Contacts Module (TDD)**
+  - [x] **2.4.1 Estrutura do Módulo**
+    - [x] Criar pasta `server/src/contacts/`
+    - [x] Criar `contacts.module.ts`
+    - [x] Criar `contacts.service.ts`
+    - [x] Criar `contacts.controller.ts`
+    - [x] Registrar `ContactsModule` no `AppModule`
+  - [x] **2.4.2 DTOs de Validação**
+    - [x] Criar pasta `server/src/contacts/dto/`
+    - [x] Criar `create-contact.dto.ts`:
       - `@IsEmail()` email
       - `@IsString()` name (min 2, max 100)
       - `@IsString() @IsOptional()` phone
       - `@IsString() @IsOptional()` company
       - `@IsString() @IsOptional()` position
-    - [ ] Criar `update-contact.dto.ts`:
+    - [x] Criar `update-contact.dto.ts`:
       - Estender `PartialType(CreateContactDto)`
       - Todos os campos opcionais
-    - [ ] Criar `filter-contacts.dto.ts`:
+    - [x] Criar `filter-contacts.dto.ts`:
       - Paginação: page, limit
       - Filtros: search (nome/email), company, ownerId
       - Ordenação: sortBy, sortOrder
-  - [ ] **2.4.3 Implementar ContactsService (TDD)**
-    - [ ] Criar `contacts.service.spec.ts`
-    - [ ] Teste: `create()` - cria contato com ownerId do usuário autenticado
-    - [ ] Teste: `findAll()` - lista apenas contatos do tenant (multi-tenancy)
-    - [ ] Teste: `findAll()` - MEMBER vê apenas seus contatos
-    - [ ] Teste: `findAll()` - OWNER/ADMIN vê todos contatos do tenant
-    - [ ] Teste: `findOne()` - retorna contato se pertence ao tenant
-    - [ ] Teste: `findOne()` - lança NotFoundException se não encontrar
-    - [ ] Teste: `update()` - atualiza apenas se for dono ou admin
-    - [ ] Teste: `update()` - lança ForbiddenException se MEMBER tentar atualizar contato de outro
-    - [ ] Teste: `remove()` - soft delete (seta deletedAt)
-    - [ ] Teste: `remove()` - lança ForbiddenException se não for dono
-    - [ ] Implementação de todos os métodos
-  - [ ] **2.4.4 Criar ContactsController**
-    - [ ] `@Post()` - Criar contato
+  - [x] **2.4.3 Implementar ContactsService (TDD)**
+    - [x] Criar `contacts.service.spec.ts`
+    - [x] Teste: `create()` - cria contato com ownerId do usuário autenticado
+    - [x] Teste: `findAll()` - lista apenas contatos do tenant (multi-tenancy)
+    - [x] Teste: `findAll()` - MEMBER vê apenas seus contatos
+    - [x] Teste: `findAll()` - OWNER/ADMIN vê todos contatos do tenant
+    - [x] Teste: `findOne()` - retorna contato se pertence ao tenant
+    - [x] Teste: `findOne()` - lança NotFoundException se não encontrar
+    - [x] Teste: `update()` - atualiza apenas se for dono ou admin
+    - [x] Teste: `update()` - lança ForbiddenException se MEMBER tentar atualizar contato de outro
+    - [x] Teste: `remove()` - soft delete (seta deletedAt)
+    - [x] Teste: `remove()` - lança ForbiddenException se não for dono
+    - [x] Implementação de todos os métodos
+  - [x] **2.4.4 Criar ContactsController**
+    - [x] `@Post()` - Criar contato
       - `@UseGuards(JwtAuthGuard)`
       - `@ApiOperation()`
       - Extrair userId de `req.user`
       - Setar ownerId automaticamente
-    - [ ] `@Get()` - Listar contatos (paginado)
+    - [x] `@Get()` - Listar contatos (paginado)
       - Aplicar filtros de tenant
       - Aplicar RBAC (member vê só os seus)
       - Retornar com paginação: `{ data, total, page, limit }`
-    - [ ] `@Get(':id')` - Buscar um contato
+    - [x] `@Get(':id')` - Buscar um contato
       - Validar ownership
-    - [ ] `@Patch(':id')` - Atualizar contato
-      - Validar ownership
-      - `@Audit('Contact')`
-    - [ ] `@Delete(':id')` - Deletar contato (soft delete)
+    - [x] `@Patch(':id')` - Atualizar contato
       - Validar ownership
       - `@Audit('Contact')`
-  - [ ] **2.4.5 Testes E2E de Contacts**
+    - [x] `@Delete(':id')` - Deletar contato (soft delete)
+      - Validar ownership
+      - `@Audit('Contact')`
+  - [x] **2.4.5 Testes E2E de Contacts**
     - POST `/contacts` → 201 (cria com ownerId correto)
     - GET `/contacts` como MEMBER → lista apenas seus contatos
     - GET `/contacts` como OWNER → lista todos do tenant
     - GET `/contacts/:id` de outro vendedor → 403
     - PATCH `/contacts/:id` de outro vendedor → 403
     - DELETE `/contacts/:id` → soft delete (deletedAt não é null)
-  - [ ] **2.4.6 Database Seeding**
-    - [ ] Instalar Faker.js
+  - [x] **2.4.6 Database Seeding**
+    - [x] Instalar Faker.js
       - `npm install @faker-js/faker --save-dev --workspace=server`
-    - [ ] Criar `server/prisma/seed.ts`
+    - [x] Criar `server/prisma/seed.ts`
       - Importar `PrismaClient` e `faker`
       - Criar função `main()`:
         - Limpar dados existentes (opcional em dev)
@@ -496,50 +496,50 @@
         - Criar 10 deals por tenant
         - Criar 30 atividades (distribuídas entre leads/contacts/deals)
       - Executar seed
-    - [ ] Configurar script no `server/package.json`
+    - [x] Configurar script no `server/package.json`
       - `"seed": "tsx prisma/seed.ts"`
-    - [ ] Testar seed: `npm run seed --workspace=server`
-- [ ] 💾 **COMMIT:** `feat: contacts crud and database seeder`
-- [ ] **2.5 Frontend: Setup & Navigation**
-  - [ ] **2.5.1 Instalar Dependências UI**
-    - [ ] Shadcn/UI
+    - [x] Testar seed: `npm run seed --workspace=server`
+- [x] 💾 **COMMIT:** `feat: contacts crud and database seeder`
+- [x] **2.5 Frontend: Setup & Navigation**
+  - [x] **2.5.1 Instalar Dependências UI**
+    - [x] Shadcn/UI
       - `npx shadcn@latest init --workspace=web`
       - Configurar Tailwind v4
       - Escolher tema e cores
-    - [ ] Instalar componentes base
+    - [x] Instalar componentes base
       - `npx shadcn@latest add button card input label --workspace=web`
       - `npx shadcn@latest add dialog dropdown-menu table --workspace=web`
       - `npx shadcn@latest add command --workspace=web` (Command Palette)
-    - [ ] Configurar React Router
+    - [x] Configurar React Router
       - `npm install react-router-dom --workspace=web`
       - Criar estrutura de rotas
-  - [ ] **2.5.2 Estrutura de Pastas Frontend**
-    - [ ] Criar `web/src/components/` (componentes reutilizáveis)
-    - [ ] Criar `web/src/pages/` (páginas/rotas)
-    - [ ] Criar `web/src/layouts/` (layouts com sidebar/header)
-    - [ ] Criar `web/src/hooks/` (custom hooks)
-    - [ ] Criar `web/src/lib/` (utilitários)
-    - [ ] Criar `web/src/stores/` (Zustand para estado global)
-  - [ ] **2.5.3 Implementar Command Palette (Cmdk)**
-    - [ ] Criar `web/src/components/command-palette.tsx`
+  - [x] **2.5.2 Estrutura de Pastas Frontend**
+    - [x] Criar `web/src/components/` (componentes reutilizáveis)
+    - [x] Criar `web/src/pages/` (páginas/rotas)
+    - [x] Criar `web/src/layouts/` (layouts com sidebar/header)
+    - [x] Criar `web/src/hooks/` (custom hooks)
+    - [x] Criar `web/src/lib/` (utilitários)
+    - [x] Criar `web/src/stores/` (Zustand para estado global)
+  - [x] **2.5.3 Implementar Command Palette (Cmdk)**
+    - [x] Criar `web/src/components/command-palette.tsx`
       - Usar componente `<Command>` do Shadcn
       - Atalho: Ctrl+K (Windows) / Cmd+K (Mac)
       - Seções: Navegação, Ações, Contatos recentes
       - Navegação rápida para: Dashboard, Contatos, Pipeline, Configurações
-    - [ ] Integrar no layout principal
+    - [x] Integrar no layout principal
       - Adicionar listener global de teclado
       - Renderizar dialog com Command
-  - [ ] **2.5.4 Criar Layout Principal**
-    - [ ] Criar `web/src/layouts/dashboard-layout.tsx`
+  - [x] **2.5.4 Criar Layout Principal**
+    - [x] Criar `web/src/layouts/dashboard-layout.tsx`
       - Sidebar com navegação
       - Header com breadcrumbs e user menu
       - Outlet para renderizar páginas
       - Command Palette integrado
-    - [ ] Criar componentes de navegação
+    - [x] Criar componentes de navegação
       - `<Sidebar>` com links: Dashboard, Contatos, Pipeline, Equipe
       - `<UserMenu>` com dropdown: Perfil, Configurações, Logout
-  - [ ] **2.5.5 Integrar SDK Gerado**
-    - [ ] Criar `web/src/lib/api-client.ts`
+  - [x] **2.5.5 Integrar SDK Gerado**
+    - [x] Criar `web/src/lib/api-client.ts`
       - Importar SDK gerado (`@hey-api/openapi-ts`)
       - Configurar baseURL: `http://localhost:3333`
       - Criar interceptor para adicionar JWT:
@@ -547,72 +547,72 @@
         - Adicionar header `Authorization: Bearer ${token}`
       - Criar interceptor para refresh token (futuro)
       - Exportar client configurado
-    - [ ] Criar custom hooks para API
+    - [x] Criar custom hooks para API
       - `web/src/hooks/use-auth.ts` (login, register, logout)
       - `web/src/hooks/use-contacts.ts` (CRUD de contatos)
-    - [ ] Configurar React Query
+    - [x] Configurar React Query
       - `npm install @tanstack/react-query --workspace=web`
       - Criar `QueryClientProvider` no root
       - Configurar cache e retry
-  - [ ] **2.5.6 Página de Login**
+  - [x] **2.5.6 Página de Login**
     - Criar `web/src/pages/login.tsx`
     - Form com email e senha
     - Validação com React Hook Form + Zod
     - Chamar API via SDK
     - Armazenar token no localStorage
     - Redirecionar para dashboard
-  - [ ] **2.5.7 Proteção de Rotas**
+  - [x] **2.5.7 Proteção de Rotas**
     - Criar `<ProtectedRoute>` component
     - Verificar se token existe
     - Redirecionar para login se não autenticado
     - Aplicar em todas as rotas internas
-- [ ] 💾 **COMMIT:** `feat(web): setup ui and command palette navigation`
-- [ ] **2.6 Frontend: Data Grid de Contatos**
-  - [ ] **2.6.1 Instalar TanStack Table**
+- [x] 💾 **COMMIT:** `feat(web): setup ui and command palette navigation`
+- [x] **2.6 Frontend: Data Grid de Contatos**
+  - [x] **2.6.1 Instalar TanStack Table**
     - `npm install @tanstack/react-table --workspace=web`
     - Instalar componentes Shadcn: `npx shadcn@latest add table`
-  - [ ] **2.6.2 Criar Página de Contatos**
-    - [ ] Criar `web/src/pages/contacts/contacts-list.tsx`
+  - [x] **2.6.2 Criar Página de Contatos**
+    - [x] Criar `web/src/pages/contacts/contacts-list.tsx`
       - Usar `useContacts()` hook para buscar dados
       - Implementar paginação server-side
       - Implementar busca/filtros
       - Implementar ordenação por coluna
-    - [ ] Criar componente `<ContactsTable>`
+    - [x] Criar componente `<ContactsTable>`
       - Configurar colunas: Nome, Email, Empresa, Telefone, Dono, Data criação
       - Ações: Editar, Deletar
       - Row selection (checkbox)
       - Bulk actions: Deletar selecionados
-    - [ ] Criar componente `<ContactsFilters>`
+    - [x] Criar componente `<ContactsFilters>`
       - Input de busca (nome/email)
       - Select de empresa
       - Select de vendedor (apenas para admin/owner)
-    - [ ] Criar botão "Novo Contato"
+    - [x] Criar botão "Novo Contato"
       - Abre dialog com formulário
       - Submit via API
       - Revalida lista após criar
-  - [ ] **2.6.3 Criar Formulário de Contato**
-    - [ ] Criar `web/src/components/contact-form.tsx`
+  - [x] **2.6.3 Criar Formulário de Contato**
+    - [x] Criar `web/src/components/contact-form.tsx`
       - Campos: Nome, Email, Telefone, Empresa, Cargo
       - Validação com Zod
       - Submit com React Hook Form
       - Loading state
       - Error handling
-    - [ ] Integrar em Dialog
+    - [x] Integrar em Dialog
       - Reutilizar para Create e Edit
       - Preencher valores no modo Edit
-  - [ ] **2.6.4 Implementar Ações na Tabela**
-    - [ ] Editar contato
+  - [x] **2.6.4 Implementar Ações na Tabela**
+    - [x] Editar contato
       - Abrir dialog preenchido
       - PATCH via API
       - Revalidar lista
-    - [ ] Deletar contato
+    - [x] Deletar contato
       - Confirmação com AlertDialog
       - DELETE via API
       - Remover da lista (optimistic update)
     - [ ] Bulk delete
       - Confirmar múltipla seleção
       - Deletar em batch
-  - [ ] **2.6.5 Implementar Paginação**
+  - [x] **2.6.5 Implementar Paginação**
     - Criar componente `<Pagination>`
     - Controles: Previous, Next, Page numbers
     - Mostrar total de registros
@@ -621,15 +621,15 @@
     - [ ] Configurar Playwright
       - `npm create playwright@latest --workspace=web`
       - Configurar browsers: chromium, firefox
-    - [ ] Criar `web/tests/contacts.spec.ts`
+    - [x] Criar `web/tests/contacts.spec.ts`
       - Teste: Listar contatos
       - Teste: Criar novo contato
       - Teste: Editar contato existente
       - Teste: Deletar contato
       - Teste: Filtrar por busca
       - Teste: Paginação funciona
-- [ ] 💾 **COMMIT:** `feat(web): contacts data grid`
-- [ ] 🏷️ **TAG:** `git tag -a v0.3.0 -m "Milestone 2: Contacts & UX"`
+- [x] 💾 **COMMIT:** `feat(web): contacts data grid`
+- [x] 🏷️ **TAG:** `git tag -a v0.3.0 -m "Milestone 2: Contacts & UX"`
 
 ---
 
