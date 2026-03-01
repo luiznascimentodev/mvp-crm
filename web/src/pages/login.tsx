@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { loginAuthControllerLogin } from '@/generated/api';
+import { authControllerLogin } from '@/generated/api';
 
 export function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
@@ -20,6 +20,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [tenantId, setTenantId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,8 +33,8 @@ export function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await loginAuthControllerLogin({
-        body: { email, password },
+      const res = await authControllerLogin({
+        body: { email, password, tenantId },
       });
       if (res.error) {
         setError('E-mail ou senha inválidos.');
@@ -68,6 +69,17 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="tenantId">ID do Workspace</Label>
+              <Input
+                id="tenantId"
+                type="text"
+                placeholder="ID do seu workspace"
+                value={tenantId}
+                onChange={(e) => setTenantId(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-1">
               <Label htmlFor="email">E-mail</Label>
               <Input

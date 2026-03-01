@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Users,
+  UsersRound,
   LayoutDashboard,
   Handshake,
   LogOut,
@@ -24,6 +25,7 @@ const nav = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Contatos', to: '/contacts', icon: Users },
   { label: 'Pipeline', to: '/pipeline', icon: Handshake },
+  { label: 'Equipe', to: '/team', icon: UsersRound },
 ];
 
 export function DashboardLayout() {

@@ -9,10 +9,9 @@ client.setConfig({
 client.interceptors.request.use((request) => {
   const token = localStorage.getItem('access_token');
   if (token) {
-    if (!request.headers) {
-      request.headers = {};
-    }
-    request.headers.Authorization = `Bearer ${token}`;
+    const headers = new Headers(request.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+    return new Request(request, { headers });
   }
   return request;
 });

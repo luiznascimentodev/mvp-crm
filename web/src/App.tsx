@@ -7,6 +7,8 @@ import { LoginPage } from '@/pages/login';
 import { DashboardPage } from '@/pages/dashboard';
 import { ContactsPage } from '@/pages/contacts/contacts-page';
 import { PipelinePage } from '@/pages/pipeline/pipeline-page';
+import { TeamPage } from '@/pages/team/team-page';
+import { AcceptInvitePage } from '@/pages/team/accept-invite-page';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,11 +22,13 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/accept-invite/:token" element={<AcceptInvitePage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/pipeline" element={<PipelinePage />} />
+              <Route path="/team" element={<TeamPage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
