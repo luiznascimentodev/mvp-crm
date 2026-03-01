@@ -10,8 +10,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { Injectable, Logger } from '@nestjs/common';
-import { DealsService } from '../deals/deals.service';
-import { DealStage } from '@prisma/client';
 import { Role } from '../common/enums/role.enum';
 import type { AuthUser } from '../auth/strategies/jwt.strategy';
 
@@ -22,9 +20,9 @@ interface JwtPayload {
   role: Role;
 }
 
-interface MoveStagePayload {
-  dealId: string;
-  stage: DealStage;
+interface LeadMovePayload {
+  leadId: string;
+  status: string;
 }
 
 @Injectable()
@@ -41,13 +39,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(EventsGateway.name);
 
-  constructor(
-    private readonly jwt: JwtService,
-    private readonly deals: DealsService,
-  ) {}
+  constructor(private readonly jwt: JwtService) {}
 
   /**
-   * Autentica o socket via JWT na conexão.
+   * Autentica o socket via JWT na conexao.
    * Armazena userId/tenantId em socket.data e entra na sala do tenant.
    */
   async handleConnection(client: Socket) {
@@ -57,7 +52,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.handshake.headers.authorization?.replace('Bearer ', '');
 
       if (!token) {
-        this.logger.warn(`[WS] Conexão rejeitada — sem token`);
+        this.logger.warn(`[WS] Conexao rejeitada -- sem token`);
         client.disconnect(true);
         return;
       }
@@ -70,13 +65,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         role: payload.role,
       } satisfies AuthUser;
 
-      // Isolar por tenant: cada tenant tem sua própria "sala"
+      // Isolar por tenant: cada tenant tem sua propria "sala"
       await client.join(payload.tenantId);
       this.logger.log(
         `[WS] ${payload.email} conectado (tenant: ${payload.tenantId})`,
       );
     } catch {
-      this.logger.warn(`[WS] Token inválido — desconectando`);
+      this.logger.warn(`[WS] Token invalido -- desconectando`);
       client.disconnect(true);
     }
   }
@@ -87,53 +82,44 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Evento: mover deal de stage (Kanban drag & drop).
+   * Evento: notificar movimento de lead (Kanban drag & drop).
    * Broadcast para todos no mesmo tenant.
    */
-  @SubscribeMessage('deal.move')
-  async handleDealMove(
+  @SubscribeMessage('lead.move')
+  handleLeadMove(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: MoveStagePayload,
+    @MessageBody() payload: LeadMovePayload,
   ) {
     const user = client.data as AuthUser;
-
-    try {
-      const updated = await this.deals.moveStage(
-        payload.dealId,
-        { stage: payload.stage },
-        user,
-      );
-
-      // Broadcast para todos no tenant (inclusive quem enviou)
-      this.server.to(user.tenantId).emit('deal.updated', {
-        dealId: updated.id,
-        stage: updated.stage,
-        isActive: updated.isActive,
-        updatedBy: user.userId,
-      });
-    } catch (err) {
-      // Envia erro só para quem tentou mover
-      client.emit('deal.error', {
-        dealId: payload.dealId,
-        message: (err as Error).message,
-      });
-    }
+    // Broadcast para todos no tenant (inclusive quem enviou)
+    this.server.to(user.tenantId).emit('lead.updated', {
+      leadId: payload.leadId,
+      status: payload.status,
+      updatedBy: user.userId,
+    });
   }
 
   /**
-   * Emitir evento de deal criado para o tenant (chamado pelo DealsService).
+   * Emitir evento de lead atualizado para o tenant.
    */
-  emitDealCreated(
+  emitLeadUpdated(tenantId: string, lead: { id: string; status: string }) {
+    this.server.to(tenantId).emit('lead.updated', lead);
+  }
+
+  /**
+   * Emitir evento de lead criado para o tenant.
+   */
+  emitLeadCreated(
     tenantId: string,
-    deal: { id: string; title: string; stage: DealStage },
+    lead: { id: string; name: string; status: string },
   ) {
-    this.server.to(tenantId).emit('deal.created', deal);
+    this.server.to(tenantId).emit('lead.created', lead);
   }
 
   /**
-   * Emitir evento de deal removido para o tenant.
+   * Emitir evento de lead removido para o tenant.
    */
-  emitDealDeleted(tenantId: string, dealId: string) {
-    this.server.to(tenantId).emit('deal.deleted', { dealId });
+  emitLeadDeleted(tenantId: string, leadId: string) {
+    this.server.to(tenantId).emit('lead.deleted', { leadId });
   }
 }

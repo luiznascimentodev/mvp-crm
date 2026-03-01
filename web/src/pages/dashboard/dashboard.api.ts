@@ -1,5 +1,3 @@
-import type { DealStage } from './dashboard.types';
-
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
 function authHeaders(): Record<string, string> {
@@ -9,48 +7,44 @@ function authHeaders(): Record<string, string> {
 
 export interface DashboardMetrics {
   totalContacts: number;
-  totalDeals: number;
-  activeDeals: number;
-  pipelineValue: number;
+  totalLeads: number;
+  wonLeads: number;
   conversionRate: number;
-  dealsByStage: { stage: DealStage; count: number; value: number }[];
+  leadsByStatus: { status: string; count: number }[];
 }
 
-export interface DealsOverTimeItem {
+export interface LeadsOverTimeItem {
   date: string;
   count: number;
-  totalValue: number;
 }
 
 export interface TopPerformerItem {
   userId: string;
   userName: string;
-  wonDeals: number;
-  wonValue: number;
+  wonLeads: number;
 }
 
 export interface FunnelItem {
-  stage: DealStage;
+  status: string;
   count: number;
-  value: number;
 }
 
 export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
   const res = await fetch(`${BASE}/dashboard/metrics`, {
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error('Erro ao buscar métricas');
+  if (!res.ok) throw new Error('Erro ao buscar metricas');
   return res.json() as Promise<DashboardMetrics>;
 }
 
-export async function fetchDealsOverTime(
+export async function fetchLeadsOverTime(
   days = 30,
-): Promise<DealsOverTimeItem[]> {
-  const res = await fetch(`${BASE}/dashboard/deals-over-time?days=${days}`, {
+): Promise<LeadsOverTimeItem[]> {
+  const res = await fetch(`${BASE}/dashboard/leads-over-time?days=${days}`, {
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error('Erro ao buscar deals por período');
-  return res.json() as Promise<DealsOverTimeItem[]>;
+  if (!res.ok) throw new Error('Erro ao buscar leads por periodo');
+  return res.json() as Promise<LeadsOverTimeItem[]>;
 }
 
 export async function fetchTopPerformers(): Promise<TopPerformerItem[]> {
@@ -65,6 +59,6 @@ export async function fetchConversionFunnel(): Promise<FunnelItem[]> {
   const res = await fetch(`${BASE}/dashboard/funnel`, {
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error('Erro ao buscar funil de conversão');
+  if (!res.ok) throw new Error('Erro ao buscar funil');
   return res.json() as Promise<FunnelItem[]>;
 }

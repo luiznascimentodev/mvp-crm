@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/stores/auth.store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Handshake } from 'lucide-react';
+import { Users, Target } from 'lucide-react';
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -28,8 +28,8 @@ export function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Deals Ativos</CardTitle>
-            <Handshake className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">—</div>

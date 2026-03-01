@@ -4,35 +4,30 @@ import { useAuthStore } from '@/stores/auth.store';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
-export interface DealUpdatedPayload {
-  id: string;
-  stage: string;
-  probability: number;
-  isActive: boolean;
-  updatedAt: string;
+export interface LeadUpdatedPayload {
+  leadId: string;
+  status: string;
+  updatedBy: string;
 }
 
-export interface DealCreatedPayload {
+export interface LeadCreatedPayload {
   id: string;
   tenantId: string;
   ownerId: string;
-  title: string;
-  value: string;
-  stage: string;
-  probability: number;
-  isActive: boolean;
+  name: string;
+  status: string;
   createdAt: string;
 }
 
-export interface DealDeletedPayload {
-  id: string;
+export interface LeadDeletedPayload {
+  leadId: string;
 }
 
 interface UseSocketReturn {
   isConnected: boolean;
-  onDealUpdated: (cb: (payload: DealUpdatedPayload) => void) => () => void;
-  onDealCreated: (cb: (payload: DealCreatedPayload) => void) => () => void;
-  onDealDeleted: (cb: (payload: DealDeletedPayload) => void) => () => void;
+  onLeadUpdated: (cb: (payload: LeadUpdatedPayload) => void) => () => void;
+  onLeadCreated: (cb: (payload: LeadCreatedPayload) => void) => () => void;
+  onLeadDeleted: (cb: (payload: LeadDeletedPayload) => void) => () => void;
 }
 
 export function useSocket(): UseSocketReturn {
@@ -61,26 +56,26 @@ export function useSocket(): UseSocketReturn {
     };
   }, [token]);
 
-  const onDealUpdated = (cb: (payload: DealUpdatedPayload) => void) => {
+  const onLeadUpdated = (cb: (payload: LeadUpdatedPayload) => void) => {
     const socket = socketRef.current;
     if (!socket) return () => {};
-    socket.on('deal.updated', cb);
-    return () => socket.off('deal.updated', cb);
+    socket.on('lead.updated', cb);
+    return () => socket.off('lead.updated', cb);
   };
 
-  const onDealCreated = (cb: (payload: DealCreatedPayload) => void) => {
+  const onLeadCreated = (cb: (payload: LeadCreatedPayload) => void) => {
     const socket = socketRef.current;
     if (!socket) return () => {};
-    socket.on('deal.created', cb);
-    return () => socket.off('deal.created', cb);
+    socket.on('lead.created', cb);
+    return () => socket.off('lead.created', cb);
   };
 
-  const onDealDeleted = (cb: (payload: DealDeletedPayload) => void) => {
+  const onLeadDeleted = (cb: (payload: LeadDeletedPayload) => void) => {
     const socket = socketRef.current;
     if (!socket) return () => {};
-    socket.on('deal.deleted', cb);
-    return () => socket.off('deal.deleted', cb);
+    socket.on('lead.deleted', cb);
+    return () => socket.off('lead.deleted', cb);
   };
 
-  return { isConnected, onDealUpdated, onDealCreated, onDealDeleted };
+  return { isConnected, onLeadUpdated, onLeadCreated, onLeadDeleted };
 }

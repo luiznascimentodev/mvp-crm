@@ -1,15 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DealStage } from '@prisma/client';
 import { Role } from '../common/enums/role.enum';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JwtService } from '@nestjs/jwt';
 import { EventsGateway } from './events.gateway';
-import { DealsService } from '../deals/deals.service';
 import type { AuthUser } from '../auth/strategies/jwt.strategy';
 
 const TENANT_ID = 'tenant-uuid-001';
 const USER_ID = 'user-uuid-001';
-const DEAL_ID = 'deal-uuid-001';
+const LEAD_ID = 'lead-uuid-001';
 
 // Socket mock
 const makeSocket = (override?: object) => ({
@@ -35,10 +33,6 @@ const mockJwt = {
   verify: vi.fn(),
 };
 
-const mockDeals = {
-  moveStage: vi.fn(),
-};
-
 describe('EventsGateway', () => {
   let gateway: EventsGateway;
 
@@ -46,23 +40,15 @@ describe('EventsGateway', () => {
     vi.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        EventsGateway,
-        { provide: JwtService, useValue: mockJwt },
-        { provide: DealsService, useValue: mockDeals },
-      ],
+      providers: [EventsGateway, { provide: JwtService, useValue: mockJwt }],
     }).compile();
 
     gateway = module.get<EventsGateway>(EventsGateway);
-    // Injetar o servidor mock
     Reflect.set(gateway, 'server', mockServer);
   });
 
-  // ──────────────────────────────────────────────────────────
-  // handleConnection()
-  // ──────────────────────────────────────────────────────────
   describe('handleConnection()', () => {
-    it('deve autenticar e conectar socket com token válido', async () => {
+    it('deve autenticar e conectar socket com token valido', async () => {
       mockJwt.verify.mockReturnValue({
         sub: USER_ID,
         email: 'user@test.com',
@@ -90,7 +76,7 @@ describe('EventsGateway', () => {
       expect(client.join).not.toHaveBeenCalled();
     });
 
-    it('deve desconectar socket com token inválido', async () => {
+    it('deve desconectar socket com token invalido', async () => {
       mockJwt.verify.mockImplementation(() => {
         throw new Error('invalid token');
       });
@@ -121,10 +107,7 @@ describe('EventsGateway', () => {
     });
   });
 
-  // ──────────────────────────────────────────────────────────
-  // handleDealMove()
-  // ──────────────────────────────────────────────────────────
-  describe('handleDealMove()', () => {
+  describe('handleLeadMove()', () => {
     const user: AuthUser = {
       userId: USER_ID,
       email: 'user@test.com',
@@ -132,70 +115,49 @@ describe('EventsGateway', () => {
       role: Role.MEMBER,
     };
 
-    it('deve mover deal e broadcast para o tenant', async () => {
-      const updatedDeal = {
-        id: DEAL_ID,
-        stage: DealStage.QUALIFICATION,
-        isActive: true,
-        probability: 25,
-      };
-      mockDeals.moveStage.mockResolvedValue(updatedDeal);
-
+    it('deve fazer broadcast de lead.updated para o tenant', () => {
       const client = makeSocket({ data: user });
-      await gateway.handleDealMove(client as never, {
-        dealId: DEAL_ID,
-        stage: DealStage.QUALIFICATION,
+      gateway.handleLeadMove(client as never, {
+        leadId: LEAD_ID,
+        status: 'qualified',
       });
 
-      expect(mockDeals.moveStage).toHaveBeenCalledWith(
-        DEAL_ID,
-        { stage: DealStage.QUALIFICATION },
-        user,
-      );
       expect(mockServer.to).toHaveBeenCalledWith(TENANT_ID);
       expect(mockServer.emit).toHaveBeenCalledWith(
-        'deal.updated',
+        'lead.updated',
         expect.objectContaining({
-          dealId: DEAL_ID,
-          stage: DealStage.QUALIFICATION,
+          leadId: LEAD_ID,
+          status: 'qualified',
         }),
-      );
-    });
-
-    it('deve emitir deal.error para o cliente em caso de falha', async () => {
-      mockDeals.moveStage.mockRejectedValue(new Error('Deal não encontrado.'));
-
-      const client = makeSocket({ data: user });
-      await gateway.handleDealMove(client as never, {
-        dealId: DEAL_ID,
-        stage: DealStage.CLOSED_WON,
-      });
-
-      expect(client.emit).toHaveBeenCalledWith(
-        'deal.error',
-        expect.objectContaining({ dealId: DEAL_ID }),
       );
     });
   });
 
-  // ──────────────────────────────────────────────────────────
-  // emitDealCreated() / emitDealDeleted()
-  // ──────────────────────────────────────────────────────────
   describe('emit helpers', () => {
-    it('emitDealCreated envia deal.created para o tenant', () => {
-      const deal = { id: DEAL_ID, title: 'Deal X', stage: DealStage.PROPOSAL };
-      gateway.emitDealCreated(TENANT_ID, deal);
+    it('emitLeadUpdated envia lead.updated para o tenant', () => {
+      gateway.emitLeadUpdated(TENANT_ID, { id: LEAD_ID, status: 'won' });
 
       expect(mockServer.to).toHaveBeenCalledWith(TENANT_ID);
-      expect(mockServer.emit).toHaveBeenCalledWith('deal.created', deal);
+      expect(mockServer.emit).toHaveBeenCalledWith('lead.updated', {
+        id: LEAD_ID,
+        status: 'won',
+      });
     });
 
-    it('emitDealDeleted envia deal.deleted para o tenant', () => {
-      gateway.emitDealDeleted(TENANT_ID, DEAL_ID);
+    it('emitLeadCreated envia lead.created para o tenant', () => {
+      const lead = { id: LEAD_ID, name: 'Ana Lead', status: 'new' };
+      gateway.emitLeadCreated(TENANT_ID, lead);
 
       expect(mockServer.to).toHaveBeenCalledWith(TENANT_ID);
-      expect(mockServer.emit).toHaveBeenCalledWith('deal.deleted', {
-        dealId: DEAL_ID,
+      expect(mockServer.emit).toHaveBeenCalledWith('lead.created', lead);
+    });
+
+    it('emitLeadDeleted envia lead.deleted para o tenant', () => {
+      gateway.emitLeadDeleted(TENANT_ID, LEAD_ID);
+
+      expect(mockServer.to).toHaveBeenCalledWith(TENANT_ID);
+      expect(mockServer.emit).toHaveBeenCalledWith('lead.deleted', {
+        leadId: LEAD_ID,
       });
     });
   });

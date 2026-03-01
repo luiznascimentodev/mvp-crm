@@ -10,17 +10,15 @@ import {
 
 interface Metrics {
   totalContacts: number;
-  totalDeals: number;
-  activeDeals: number;
-  pipelineValue: number;
+  totalLeads: number;
+  wonLeads: number;
   conversionRate: number;
-  dealsByStage: unknown[];
+  leadsByStatus: unknown[];
 }
 
 interface FunnelItem {
-  stage: string;
+  status: string;
   count: number;
-  value: number;
 }
 
 describe('DashboardController (Integration)', () => {
@@ -76,12 +74,11 @@ describe('DashboardController (Integration)', () => {
       expect(res.statusCode).toBe(200);
       const body = res.json<Metrics>();
       expect(body).toHaveProperty('totalContacts');
-      expect(body).toHaveProperty('totalDeals');
-      expect(body).toHaveProperty('activeDeals');
-      expect(body).toHaveProperty('pipelineValue');
+      expect(body).toHaveProperty('totalLeads');
+      expect(body).toHaveProperty('wonLeads');
       expect(body).toHaveProperty('conversionRate');
-      expect(body).toHaveProperty('dealsByStage');
-      expect(Array.isArray(body.dealsByStage)).toBe(true);
+      expect(body).toHaveProperty('leadsByStatus');
+      expect(Array.isArray(body.leadsByStatus)).toBe(true);
     });
 
     it('should return 401 without token', async () => {
@@ -103,16 +100,16 @@ describe('DashboardController (Integration)', () => {
       expect(res.statusCode).toBe(200);
       const body = res.json<Metrics>();
       expect(body.totalContacts).toBe(0);
-      expect(body.totalDeals).toBe(0);
+      expect(body.totalLeads).toBe(0);
       expect(body.conversionRate).toBe(0);
     });
   });
 
-  describe('GET /dashboard/deals-over-time', () => {
-    it('should return array of daily deal stats', async () => {
+  describe('GET /dashboard/leads-over-time', () => {
+    it('should return array of daily lead stats', async () => {
       const res = await application.inject({
         method: 'GET',
-        url: '/dashboard/deals-over-time?days=7',
+        url: '/dashboard/leads-over-time?days=7',
         headers: { authorization: `Bearer ${accessToken}` },
       });
 
@@ -124,7 +121,7 @@ describe('DashboardController (Integration)', () => {
     it('should default to 30 days when no param', async () => {
       const res = await application.inject({
         method: 'GET',
-        url: '/dashboard/deals-over-time',
+        url: '/dashboard/leads-over-time',
         headers: { authorization: `Bearer ${accessToken}` },
       });
 
@@ -157,12 +154,12 @@ describe('DashboardController (Integration)', () => {
       expect(res.statusCode).toBe(200);
       const body = res.json<FunnelItem[]>();
       expect(Array.isArray(body)).toBe(true);
-      expect(body).toHaveLength(6);
+      expect(body).toHaveLength(7);
 
-      const stages = body.map((item) => item.stage);
-      expect(stages).toContain('PROSPECTING');
-      expect(stages).toContain('CLOSED_WON');
-      expect(stages).toContain('CLOSED_LOST');
+      const statuses = body.map((item) => item.status);
+      expect(statuses).toContain('new');
+      expect(statuses).toContain('won');
+      expect(statuses).toContain('lost');
     });
   });
 });

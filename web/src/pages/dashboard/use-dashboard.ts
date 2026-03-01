@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   fetchConversionFunnel,
-  fetchDealsOverTime,
+  fetchLeadsOverTime,
   fetchDashboardMetrics,
   fetchTopPerformers,
 } from './dashboard.api';
@@ -15,9 +15,9 @@ export function useDashboard() {
     queryFn: fetchDashboardMetrics,
   });
 
-  const dealsOverTime = useQuery({
-    queryKey: ['dashboard', 'deals-over-time', days],
-    queryFn: () => fetchDealsOverTime(days),
+  const leadsOverTime = useQuery({
+    queryKey: ['dashboard', 'leads-over-time', days],
+    queryFn: () => fetchLeadsOverTime(days),
   });
 
   const topPerformers = useQuery({
@@ -32,7 +32,7 @@ export function useDashboard() {
 
   return {
     metrics,
-    dealsOverTime,
+    leadsOverTime,
     topPerformers,
     funnel,
     days,

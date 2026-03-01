@@ -4,16 +4,26 @@
  * Popula o banco de desenvolvimento com dados fakes realistas.
  * Execute via: npm run seed --workspace=server
  *
- * Estrutura criada:
- *  - 2 Tenants
- *  - Por tenant: 1 OWNER, 1 ADMIN, 3 MEMBERs
- *  - Por tenant: 50 Contacts (distribuídos entre membros)
- *  - Por tenant: 20 Leads
- *  - Por tenant: 10 Deals (ligados a contatos)
- *  - Por tenant: 30 Activities (distribuídas entre leads/contacts/deals)
+ * IDs e credenciais são FIXOS para facilitar testes manuais.
+ *
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │  Tenant 1 — "Orbit Demo Pro"                                    │
+ * │  ID do Workspace: 10000000-0000-4000-a000-000000000001         │
+ * │  owner@orbitdemo.com   · OWNER  · Senha@123                    │
+ * │  admin@orbitdemo.com   · ADMIN  · Senha@123                    │
+ * │  member1@orbitdemo.com · MEMBER · Senha@123                    │
+ * │  member2@orbitdemo.com · MEMBER · Senha@123                    │
+ * │  member3@orbitdemo.com · MEMBER · Senha@123                    │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  Tenant 2 — "Acme Free"                                         │
+ * │  ID do Workspace: 20000000-0000-4000-a000-000000000002         │
+ * │  owner@acmefree.com    · OWNER  · Senha@123                    │
+ * │  admin@acmefree.com    · ADMIN  · Senha@123                    │
+ * │  member1@acmefree.com  · MEMBER · Senha@123                    │
+ * └─────────────────────────────────────────────────────────────────┘
  */
 
-import { DealStage, PrismaClient, Role } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as argon2 from 'argon2';
 
@@ -34,36 +44,58 @@ const LEAD_SOURCES = [
   'event',
   'email_campaign',
 ];
-const DEAL_STAGES = Object.values(DealStage);
 const ACTIVITY_TYPES = ['call', 'email', 'meeting', 'task', 'note'];
-const CURRENCIES = ['BRL', 'USD', 'EUR'];
+
+// Tenants com UUIDs FIXOS para uso previsível no login manual
+const TENANTS = [
+  {
+    id: '10000000-0000-4000-a000-000000000001',
+    name: 'Orbit Demo Pro',
+    slug: 'orbit-demo-pro',
+    plan: 'pro',
+    domain: 'orbitdemo.com',
+    memberCount: 3,
+  },
+  {
+    id: '20000000-0000-4000-a000-000000000002',
+    name: 'Acme Free',
+    slug: 'acme-free',
+    plan: 'free',
+    domain: 'acmefree.com',
+    memberCount: 1,
+  },
+];
 
 // ────────────────────────────────────────────────────────────
 // Main
 // ────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🌱 Starting seed...');
+  console.log('🌱 Starting seed...\n');
+  console.log('  ⚠️  Limpando banco de dados...');
+  await prisma.$executeRawUnsafe('TRUNCATE TABLE "tenants" CASCADE;');
+  console.log('  ✅ Banco limpo.\n');
 
   const passwordHash = await argon2.hash('Senha@123');
 
-  for (let t = 1; t <= 2; t++) {
+  for (const tenantDef of TENANTS) {
     const tenant = await prisma.tenant.create({
       data: {
-        name: faker.company.name(),
-        slug: `tenant-${t}-${faker.string.alphanumeric(6).toLowerCase()}`,
-        plan: t === 1 ? 'pro' : 'free',
+        id: tenantDef.id,
+        name: tenantDef.name,
+        slug: tenantDef.slug,
+        plan: tenantDef.plan,
       },
     });
 
-    console.log(`  📦 Tenant: ${tenant.name}`);
+    console.log(`  📦 Tenant: ${tenant.name} (${tenant.id})`);
 
-    // ── Usuários ─────────────────────────────────────────────
+    // ── Usuários (credenciais FIXAS) ─────────────────────────
     const owner = await prisma.user.create({
       data: {
         tenantId: tenant.id,
-        email: `owner${t}@seed.com`,
-        name: faker.person.fullName(),
+        email: `owner@${tenantDef.domain}`,
+        name: 'Ana Carolina (OWNER)',
         passwordHash,
         role: Role.OWNER,
       },
@@ -72,19 +104,19 @@ async function main() {
     const admin = await prisma.user.create({
       data: {
         tenantId: tenant.id,
-        email: `admin${t}@seed.com`,
-        name: faker.person.fullName(),
+        email: `admin@${tenantDef.domain}`,
+        name: 'Bruno Mendes (ADMIN)',
         passwordHash,
         role: Role.ADMIN,
       },
     });
 
     const members = await Promise.all(
-      Array.from({ length: 3 }, (_, i) =>
+      Array.from({ length: tenantDef.memberCount }, (_, i) =>
         prisma.user.create({
           data: {
             tenantId: tenant.id,
-            email: `member${t}_${i + 1}@seed.com`,
+            email: `member${i + 1}@${tenantDef.domain}`,
             name: faker.person.fullName(),
             passwordHash,
             role: Role.MEMBER,
@@ -141,52 +173,12 @@ async function main() {
     );
 
     console.log(`    🎯 Leads: ${leads.length}`);
-
-    // ── Deals ────────────────────────────────────────────────
-    const deals = await Promise.all(
-      Array.from({ length: 10 }, () => {
-        const stage = pick(DEAL_STAGES);
-        const probability =
-          stage === DealStage.CLOSED_WON
-            ? 100
-            : stage === DealStage.CLOSED_LOST
-              ? 0
-              : faker.number.int({ min: 10, max: 90 });
-
-        return prisma.deal.create({
-          data: {
-            tenantId: tenant.id,
-            ownerId: pick(allUsers).id,
-            contactId: pick(contacts).id,
-            title: faker.commerce.productName() + ' Deal',
-            description: faker.lorem.paragraph(),
-            value: parseFloat(
-              faker.finance.amount({ min: 1000, max: 500000, dec: 2 }),
-            ),
-            currency: pick(CURRENCIES),
-            stage,
-            probability,
-            expectedCloseDate: faker.date.future(),
-            isActive:
-              stage !== DealStage.CLOSED_WON && stage !== DealStage.CLOSED_LOST,
-            closedAt:
-              stage === DealStage.CLOSED_WON || stage === DealStage.CLOSED_LOST
-                ? faker.date.recent()
-                : null,
-          },
-        });
-      }),
-    );
-
-    console.log(`    💰 Deals: ${deals.length}`);
-
     // ── Activities ───────────────────────────────────────────
     await Promise.all(
       Array.from({ length: 30 }, () => {
         const roll = Math.random();
-        const leadId = roll < 0.33 ? pick(leads).id : null;
-        const contactId = !leadId && roll < 0.66 ? pick(contacts).id : null;
-        const dealId = !leadId && !contactId ? pick(deals).id : null;
+        const leadId = roll < 0.5 ? pick(leads).id : null;
+        const contactId = !leadId ? pick(contacts).id : null;
 
         const completed = faker.datatype.boolean();
         return prisma.activity.create({
@@ -205,17 +197,34 @@ async function main() {
                 : null,
             leadId,
             contactId,
-            dealId,
           },
         });
       }),
     );
 
     console.log(`    📋 Activities: 30`);
+    console.log();
   }
 
-  console.log('\n✅ Seed completed!');
-  console.log('   Credentials (all users): Senha@123\n');
+  // ── Resumo de credenciais ──────────────────────────────────
+  console.log('╔════════════════════════════════════════════════════════════╗');
+  console.log('║          CREDENCIAIS DE TESTE — Orbit CRM                 ║');
+  console.log('║          SENHA DE TODOS OS USUÁRIOS: Senha@123            ║');
+  console.log('╠════════════════════════════════════════════════════════════╣');
+  console.log('║  TENANT 1 — Orbit Demo Pro                                ║');
+  console.log('║  ID do Workspace: 10000000-0000-4000-a000-000000000001    ║');
+  console.log('║   owner@orbitdemo.com   → OWNER                          ║');
+  console.log('║   admin@orbitdemo.com   → ADMIN                          ║');
+  console.log('║   member1@orbitdemo.com → MEMBER                         ║');
+  console.log('║   member2@orbitdemo.com → MEMBER                         ║');
+  console.log('║   member3@orbitdemo.com → MEMBER                         ║');
+  console.log('╠════════════════════════════════════════════════════════════╣');
+  console.log('║  TENANT 2 — Acme Free                                     ║');
+  console.log('║  ID do Workspace: 20000000-0000-4000-a000-000000000002    ║');
+  console.log('║   owner@acmefree.com    → OWNER                          ║');
+  console.log('║   admin@acmefree.com    → ADMIN                          ║');
+  console.log('║   member1@acmefree.com  → MEMBER                         ║');
+  console.log('╚════════════════════════════════════════════════════════════╝');
 }
 
 main()

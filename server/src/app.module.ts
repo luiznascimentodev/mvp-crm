@@ -9,13 +9,13 @@ import { AppService } from './app.service';
 import { envSchema } from './common/env/env.validation';
 import { AuthModule } from './auth/auth.module';
 import { ContactsModule } from './contacts/contacts.module';
-import { DealsModule } from './deals/deals.module';
 import { StorageModule } from './storage/storage.module';
 import { EventsModule } from './events/events.module';
 import { QueuesModule } from './queues/queues.module';
 import { TeamModule } from './team/team.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { LeadsModule } from './leads/leads.module';
 
 @Module({
   imports: [
@@ -67,12 +67,12 @@ import { DashboardModule } from './dashboard/dashboard.module';
     PrismaModule,
     AuthModule,
     ContactsModule,
-    DealsModule,
     StorageModule,
     EventsModule,
     QueuesModule,
     TeamModule,
     DashboardModule,
+    LeadsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,33 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { DealStage } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+
+const LEAD_STAGE_ORDER = [
+  'new',
+  'contacted',
+  'qualified',
+  'proposal',
+  'negotiation',
+  'won',
+  'lost',
+] as const;
+
+export type LeadStatus = (typeof LEAD_STAGE_ORDER)[number];
 
 export interface DashboardMetrics {
   totalContacts: number;
-  totalDeals: number;
-  activeDeals: number;
-  pipelineValue: number;
+  totalLeads: number;
+  wonLeads: number;
   conversionRate: number;
-  dealsByStage: { stage: DealStage; count: number; value: number }[];
+  leadsByStatus: { status: string; count: number }[];
 }
 
-export interface DealsOverTimeItem {
+export interface LeadsOverTimeItem {
   date: string;
   count: number;
-  totalValue: number;
 }
 
 export interface TopPerformerItem {
   userId: string;
   userName: string;
-  wonDeals: number;
-  wonValue: number;
+  wonLeads: number;
 }
 
 export interface FunnelItem {
-  stage: DealStage;
+  status: string;
   count: number;
-  value: number;
 }
 
 @Injectable()
@@ -35,104 +42,74 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMetrics(tenantId: string): Promise<DashboardMetrics> {
-    const [totalContacts, totalDeals, activeDeals, wonDeals, dealsByStage] =
+    const [totalContacts, totalLeads, wonLeads, leadsByStatus] =
       await Promise.all([
         this.prisma.contact.count({
           where: { tenantId, deletedAt: null },
         }),
-        this.prisma.deal.count({
+        this.prisma.lead.count({
           where: { tenantId, deletedAt: null },
         }),
-        this.prisma.deal.count({
-          where: {
-            tenantId,
-            deletedAt: null,
-            stage: {
-              notIn: [DealStage.CLOSED_WON, DealStage.CLOSED_LOST],
-            },
-          },
+        this.prisma.lead.count({
+          where: { tenantId, deletedAt: null, status: 'won' },
         }),
-        this.prisma.deal.count({
-          where: { tenantId, deletedAt: null, stage: DealStage.CLOSED_WON },
-        }),
-        this.prisma.deal.groupBy({
-          by: ['stage'],
+        this.prisma.lead.groupBy({
+          by: ['status'],
           where: { tenantId, deletedAt: null },
           _count: { id: true },
-          _sum: { value: true },
         }),
       ]);
 
-    const pipelineAgg = await this.prisma.deal.aggregate({
-      where: {
-        tenantId,
-        deletedAt: null,
-        stage: { notIn: [DealStage.CLOSED_WON, DealStage.CLOSED_LOST] },
-      },
-      _sum: { value: true },
-    });
-
-    const pipelineValue = pipelineAgg._sum.value
-      ? Number(pipelineAgg._sum.value.toString())
-      : 0;
-
     const conversionRate =
-      totalDeals > 0 ? Math.round((wonDeals / totalDeals) * 100) : 0;
+      totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
 
     return {
       totalContacts,
-      totalDeals,
-      activeDeals,
-      pipelineValue,
+      totalLeads,
+      wonLeads,
       conversionRate,
-      dealsByStage: dealsByStage.map((item) => ({
-        stage: item.stage,
+      leadsByStatus: leadsByStatus.map((item) => ({
+        status: item.status,
         count: item._count.id,
-        value: item._sum.value ? Number(item._sum.value.toString()) : 0,
       })),
     };
   }
 
-  async getDealsOverTime(
+  async getLeadsOverTime(
     tenantId: string,
     days = 30,
-  ): Promise<DealsOverTimeItem[]> {
+  ): Promise<LeadsOverTimeItem[]> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const deals = await this.prisma.deal.findMany({
+    const leads = await this.prisma.lead.findMany({
       where: { tenantId, deletedAt: null, createdAt: { gte: since } },
-      select: { createdAt: true, value: true },
+      select: { createdAt: true },
       orderBy: { createdAt: 'asc' },
     });
 
-    const grouped = new Map<string, { count: number; totalValue: number }>();
-    for (const deal of deals) {
-      const date = deal.createdAt.toISOString().slice(0, 10);
-      const existing = grouped.get(date) ?? { count: 0, totalValue: 0 };
-      existing.count += 1;
-      existing.totalValue += deal.value ? Number(deal.value.toString()) : 0;
-      grouped.set(date, existing);
+    const grouped = new Map<string, number>();
+    for (const lead of leads) {
+      const date = lead.createdAt.toISOString().slice(0, 10);
+      grouped.set(date, (grouped.get(date) ?? 0) + 1);
     }
 
-    return Array.from(grouped.entries()).map(([date, stats]) => ({
+    return Array.from(grouped.entries()).map(([date, count]) => ({
       date,
-      count: stats.count,
-      totalValue: stats.totalValue,
+      count,
     }));
   }
 
   async getTopPerformers(tenantId: string): Promise<TopPerformerItem[]> {
-    const wonByOwner = await this.prisma.deal.groupBy({
+    const wonByOwner = await this.prisma.lead.groupBy({
       by: ['ownerId'],
       where: {
         tenantId,
         deletedAt: null,
-        stage: DealStage.CLOSED_WON,
+        status: 'won',
         ownerId: { not: null },
       },
       _count: { id: true },
-      _sum: { value: true },
       orderBy: { _count: { id: 'desc' } },
       take: 5,
     });
@@ -153,37 +130,22 @@ export class DashboardService {
       .map((r) => ({
         userId: r.ownerId!,
         userName: userMap.get(r.ownerId!) ?? 'Desconhecido',
-        wonDeals: r._count.id,
-        wonValue: r._sum.value ? Number(r._sum.value.toString()) : 0,
+        wonLeads: r._count.id,
       }));
   }
 
-  async getConversionFunnel(tenantId: string): Promise<FunnelItem[]> {
-    const rows = await this.prisma.deal.groupBy({
-      by: ['stage'],
+  async getLeadsFunnel(tenantId: string): Promise<FunnelItem[]> {
+    const rows = await this.prisma.lead.groupBy({
+      by: ['status'],
       where: { tenantId, deletedAt: null },
       _count: { id: true },
-      _sum: { value: true },
     });
 
-    const stageOrder: DealStage[] = [
-      DealStage.PROSPECTING,
-      DealStage.QUALIFICATION,
-      DealStage.PROPOSAL,
-      DealStage.NEGOTIATION,
-      DealStage.CLOSED_WON,
-      DealStage.CLOSED_LOST,
-    ];
+    const map = new Map(rows.map((r) => [r.status, r._count.id]));
 
-    const map = new Map(rows.map((r) => [r.stage, r]));
-
-    return stageOrder.map((stage) => {
-      const row = map.get(stage);
-      return {
-        stage,
-        count: row?._count.id ?? 0,
-        value: row?._sum.value ? Number(row._sum.value.toString()) : 0,
-      };
-    });
+    return LEAD_STAGE_ORDER.map((status) => ({
+      status,
+      count: map.get(status) ?? 0,
+    }));
   }
 }

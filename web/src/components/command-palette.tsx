@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { LayoutDashboard, Users, Handshake, Plus } from 'lucide-react';
+import { LayoutDashboard, Users, Plus } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -19,12 +19,10 @@ interface Props {
 const pages = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Contatos', to: '/contacts', icon: Users },
-  { label: 'Deals', to: '/deals', icon: Handshake },
 ];
 
 const actions = [
   { label: 'Novo Contato', to: '/contacts?action=new', icon: Plus },
-  { label: 'Novo Deal', to: '/deals?action=new', icon: Plus },
 ];
 
 export function CommandPalette({ open, onOpenChange }: Props) {

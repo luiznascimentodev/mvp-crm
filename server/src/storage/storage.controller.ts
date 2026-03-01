@@ -27,7 +27,7 @@ class RequestUploadUrlDto {
   @IsString()
   entityType!: string;
 
-  @IsIn(['deal', 'contact', 'lead'])
+  @IsIn(['contact', 'lead'])
   entityTypeValidated?: string;
 
   @IsString()

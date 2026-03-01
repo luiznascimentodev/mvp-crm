@@ -60,13 +60,13 @@ describe('StorageService', () => {
     it('deve gerar URL de upload para MIME type válido', async () => {
       const result = await service.generatePresignedUploadUrl(
         'tenant-1',
-        'deal',
+        'lead',
         'application/pdf',
         1024 * 50,
         'proposta.pdf',
       );
       expect(result.uploadUrl).toBe('https://minio.local/signed-url');
-      expect(result.key).toMatch(/^tenant-1\/deal\/.+\.pdf$/);
+      expect(result.key).toMatch(/^tenant-1\/lead\/.+\.pdf$/);
       expect(result.expiresIn).toBe(900);
     });
 
@@ -74,7 +74,7 @@ describe('StorageService', () => {
       await expect(
         service.generatePresignedUploadUrl(
           'tenant-1',
-          'deal',
+          'lead',
           'application/exe',
           1000,
           'virus.exe',
@@ -86,7 +86,7 @@ describe('StorageService', () => {
       await expect(
         service.generatePresignedUploadUrl(
           'tenant-1',
-          'deal',
+          'lead',
           'image/jpeg',
           11 * 1024 * 1024,
           'foto.jpg',
@@ -96,7 +96,7 @@ describe('StorageService', () => {
 
     it('deve gerar URL de download', async () => {
       const result = await service.generatePresignedDownloadUrl(
-        'tenant-1/deal/uuid.pdf',
+        'tenant-1/lead/uuid.pdf',
       );
       expect(result.downloadUrl).toBe('https://minio.local/signed-url');
       expect(result.expiresIn).toBe(3600);

@@ -15,7 +15,7 @@ describe('Security: Multi-tenancy Isolation', () => {
   let tokenTenantA: string;
   let tokenTenantB: string;
   let contactIdTenantA: string;
-  let dealIdTenantA: string;
+  let leadIdTenantA: string;
 
   beforeAll(async () => {
     application = await createTestApplication();
@@ -71,19 +71,17 @@ describe('Security: Multi-tenancy Isolation', () => {
     });
     contactIdTenantA = contactRes.json<{ id: string }>().id;
 
-    // Criar deal para Tenant A (contactId é required)
-    const dealRes = await application.inject({
+    // Criar lead para Tenant A
+    const leadRes = await application.inject({
       method: 'POST',
-      url: '/deals',
+      url: '/leads',
       headers: { authorization: `Bearer ${tokenTenantA}` },
       payload: {
-        title: 'Deal Privado Tenant A',
-        value: 5000,
-        stage: 'PROSPECTING',
-        contactId: contactIdTenantA,
+        name: 'Lead Privado Tenant A',
+        email: 'private-lead@tenant-a.com',
       },
     });
-    dealIdTenantA = dealRes.json<{ id: string }>().id;
+    leadIdTenantA = leadRes.json<{ id: string }>().id;
 
     // ── Tenant B ──────────────────────────────────────────────────────────
     await prisma.tenant.upsert({
@@ -147,10 +145,10 @@ describe('Security: Multi-tenancy Isolation', () => {
     expect(ids).not.toContain(contactIdTenantA);
   });
 
-  it('Usuário Tenant B não acessa deal do Tenant A (404)', async () => {
+  it('Usuário Tenant B não acessa lead do Tenant A (404)', async () => {
     const res = await application.inject({
       method: 'GET',
-      url: `/deals/${dealIdTenantA}`,
+      url: `/leads/${leadIdTenantA}`,
       headers: { authorization: `Bearer ${tokenTenantB}` },
     });
 
@@ -181,12 +179,12 @@ describe('Security: Multi-tenancy Isolation', () => {
       }),
     ]);
 
-    const metricsA = resA.json<{ totalDeals: number; totalContacts: number }>();
-    const metricsB = resB.json<{ totalDeals: number; totalContacts: number }>();
+    const metricsA = resA.json<{ totalLeads: number; totalContacts: number }>();
+    const metricsB = resB.json<{ totalLeads: number; totalContacts: number }>();
 
-    expect(metricsA.totalDeals).toBe(1);
+    expect(metricsA.totalLeads).toBe(1);
     expect(metricsA.totalContacts).toBe(1);
-    expect(metricsB.totalDeals).toBe(0);
+    expect(metricsB.totalLeads).toBe(0);
     expect(metricsB.totalContacts).toBe(0);
   });
 });

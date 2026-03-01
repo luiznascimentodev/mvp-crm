@@ -21,12 +21,12 @@ export class DashboardController {
     return this.dashboardService.getMetrics(req.user.tenantId);
   }
 
-  @Get('deals-over-time')
-  getDealsOverTime(
+  @Get('leads-over-time')
+  getLeadsOverTime(
     @Request() req: { user: AuthUser },
     @Query('days', new DefaultValuePipe(30), ParseIntPipe) days: number,
   ) {
-    return this.dashboardService.getDealsOverTime(req.user.tenantId, days);
+    return this.dashboardService.getLeadsOverTime(req.user.tenantId, days);
   }
 
   @Get('top-performers')
@@ -35,7 +35,7 @@ export class DashboardController {
   }
 
   @Get('funnel')
-  getConversionFunnel(@Request() req: { user: AuthUser }) {
-    return this.dashboardService.getConversionFunnel(req.user.tenantId);
+  getLeadsFunnel(@Request() req: { user: AuthUser }) {
+    return this.dashboardService.getLeadsFunnel(req.user.tenantId);
   }
 }

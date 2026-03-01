@@ -6,7 +6,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function cleanDatabase(retries = 5): Promise<void> {
   // Uma única instrução atômica com CASCADE para cobrir todas as tabelas
-  // dependentes (users, contacts, leads, deals, activities, audit_logs).
+  // dependentes (users, contacts, leads, activities, audit_logs).
   // Retry garante resiliência contra deadlocks causados por writes
   // fire-and-forget (ex: AuditInterceptor) ainda em andamento.
   // Aguardamos 100ms antes do primeiro TRUNCATE para deixar writes em voo terminarem.

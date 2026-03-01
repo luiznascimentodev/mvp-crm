@@ -10,24 +10,16 @@ import {
   Bar,
   Cell,
 } from 'recharts';
-import { Users, Handshake, TrendingUp, DollarSign, Trophy } from 'lucide-react';
+import { Users, Target, TrendingUp, Trophy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MetricCard } from './metric-card';
 import { useDashboard } from './use-dashboard';
 import { STAGE_COLORS, STAGE_LABELS } from './dashboard.types';
-import type { DealStage } from './dashboard.types';
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import type { LeadStatus } from './dashboard.types';
 
 export function DashboardPage() {
-  const { metrics, dealsOverTime, topPerformers, funnel, days, setDays } =
+  const { metrics, leadsOverTime, topPerformers, funnel, days, setDays } =
     useDashboard();
 
   const m = metrics.data;
@@ -51,31 +43,31 @@ export function DashboardPage() {
           loading={metrics.isLoading}
         />
         <MetricCard
-          title="Deals Ativos"
-          value={m?.activeDeals ?? '—'}
-          icon={Handshake}
+          title="Leads Ativos"
+          value={m?.totalLeads ?? '—'}
+          icon={Target}
           loading={metrics.isLoading}
         />
         <MetricCard
           title="Taxa de Conversão"
           value={m != null ? `${m.conversionRate}%` : '—'}
-          description="deals ganhos / total"
+          description="leads ganhos / total"
           icon={TrendingUp}
           loading={metrics.isLoading}
         />
         <MetricCard
-          title="Pipeline Total"
-          value={m != null ? formatCurrency(m.pipelineValue) : '—'}
-          description="deals em andamento"
-          icon={DollarSign}
+          title="Leads Ganhos"
+          value={m?.wonLeads ?? '—'}
+          description="status = ganho"
+          icon={Trophy}
           loading={metrics.isLoading}
         />
       </div>
 
-      {/* Deals Over Time */}
+      {/* Leads Over Time */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Deals ao Longo do Tempo</CardTitle>
+          <CardTitle className="text-base">Leads ao Longo do Tempo</CardTitle>
           <div className="flex gap-2">
             {[7, 30, 90].map((d) => (
               <Button
@@ -90,13 +82,13 @@ export function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {dealsOverTime.isLoading ? (
+          {leadsOverTime.isLoading ? (
             <div className="h-64 w-full animate-pulse rounded bg-muted" />
           ) : (
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
-                  data={dealsOverTime.data ?? []}
+                  data={leadsOverTime.data ?? []}
                   margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -108,8 +100,8 @@ export function DashboardPage() {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
                     formatter={(value: number, name: string) => [
-                      name === 'totalValue' ? formatCurrency(value) : value,
-                      name === 'totalValue' ? 'Valor Total' : 'Qtd. Deals',
+                      value,
+                      name === 'count' ? 'Leads' : name,
                     ]}
                   />
                   <Line
@@ -141,7 +133,7 @@ export function DashboardPage() {
                   <BarChart
                     data={(funnel.data ?? []).map((item) => ({
                       ...item,
-                      label: STAGE_LABELS[item.stage as DealStage],
+                      label: STAGE_LABELS[item.status as LeadStatus],
                     }))}
                     margin={{ top: 5, right: 20, left: 0, bottom: 40 }}
                   >
@@ -157,11 +149,11 @@ export function DashboardPage() {
                     />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
-                    <Bar dataKey="count" name="Deals" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="count" name="Leads" radius={[4, 4, 0, 0]}>
                       {(funnel.data ?? []).map((item) => (
                         <Cell
-                          key={item.stage}
-                          fill={STAGE_COLORS[item.stage as DealStage]}
+                          key={item.status}
+                          fill={STAGE_COLORS[item.status as LeadStatus]}
                         />
                       ))}
                     </Bar>
@@ -190,7 +182,7 @@ export function DashboardPage() {
               </div>
             ) : (topPerformers.data ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhum deal ganho ainda
+                Nenhum lead ganho ainda
               </p>
             ) : (
               <div className="space-y-3">
@@ -208,14 +200,14 @@ export function DashboardPage() {
                           {performer.userName}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {performer.wonDeals} deal
-                          {performer.wonDeals !== 1 ? 's' : ''} ganho
-                          {performer.wonDeals !== 1 ? 's' : ''}
+                          {performer.wonLeads} lead
+                          {performer.wonLeads !== 1 ? 's' : ''} ganho
+                          {performer.wonLeads !== 1 ? 's' : ''}
                         </p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-green-600">
-                      {formatCurrency(performer.wonValue)}
+                    <span className="text-sm font-semibold text-emerald-600">
+                      #{idx + 1}
                     </span>
                   </div>
                 ))}

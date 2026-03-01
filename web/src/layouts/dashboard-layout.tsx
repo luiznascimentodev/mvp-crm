@@ -98,8 +98,10 @@ export function DashboardLayout() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+        <main className="flex-1 overflow-auto">
+          <div className="mx-auto w-full max-w-5xl px-6 py-6 h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
 

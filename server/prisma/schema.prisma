@@ -214,9 +214,9 @@ model Deal {
   ownerId String? @db.Uuid
   owner   User?   @relation("DealOwner", fields: [ownerId], references: [id], onDelete: SetNull)
 
-  // Relacionamento com Contact
-  contactId String  @db.Uuid
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  // Relacionamento com Contact (opcional — deal pode ser criado sem contato vinculado)
+  contactId String?  @db.Uuid
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Restrict)
 
   // Informações Básicas
   title       String  @db.VarChar(255)
