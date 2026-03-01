@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -32,6 +33,7 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ auth: { ttl: 900_000, limit: 5 } })
   @ApiOperation({ summary: 'Register new user' })
   @ApiResponse({ status: 201, description: 'User successfully created' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
@@ -42,6 +44,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { ttl: 900_000, limit: 5 } })
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({
     status: 200,
@@ -54,6 +57,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @SkipThrottle()
   @ApiBearerAuth()
   @Get('profile')
   @ApiOperation({ summary: 'Get user profile (protected)' })

@@ -1,0 +1,72 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Roda toda segunda-feira às 08:00 UTC
+    - cron: '0 8 * * 1'
+
+jobs:
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: ['.', 'server', 'web']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies (${{ matrix.workspace }})
+        working-directory: ${{ matrix.workspace }}
+        run: npm ci --ignore-scripts
+
+      - name: Run npm audit (${{ matrix.workspace }})
+        working-directory: ${{ matrix.workspace }}
+        # --audit-level=critical: bloqueia o pipeline apenas em vulnerabilidades críticas.
+        # Vulnerabilidades HIGH conhecidas e não-patcháveis:
+        #   - GHSA-fj3w-jwp8-x2g3 (fast-xml-parser <5.3.8 via @aws-sdk/xml-builder)
+        #     A AWS ainda não publicou @aws-sdk/xml-builder com fast-xml-parser >=5.3.8.
+        #     Baixo impacto para este CRM (input user não passa por XMLBuilder.build()).
+        #   - webpack/serialize-javascript (apenas devDependencies de build)
+        # Rever quando @aws-sdk/xml-builder release fix upstream.
+        run: npm audit --audit-level=critical --omit=dev
+
+  licenses:
+    name: License Check (server)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci --ignore-scripts
+
+      - name: Install license-checker
+        run: npm install -g license-checker
+
+      - name: Check licenses (proibir GPL não-comercial e licenças problemáticas)
+        working-directory: server
+        run: |
+          license-checker \
+            --excludePrivatePackages \
+            --onlyAllow "MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;CC0-1.0;CC-BY-3.0;CC-BY-4.0;0BSD;Python-2.0;Unlicense;BlueOak-1.0.0" \
+            --summary

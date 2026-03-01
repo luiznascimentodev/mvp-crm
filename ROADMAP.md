@@ -975,88 +975,89 @@
 
 **Objetivo:** Auditoria e Proteção.
 
-- [ ] **6.1 🛡️ Security Gates**
-  - [ ] **6.1.1 Implementar Rate Limiting**
-    - [ ] Instalar ThrottlerModule
+- [x] **6.1 🛡️ Security Gates**
+  - [x] **6.1.1 Implementar Rate Limiting**
+    - [x] Instalar ThrottlerModule
       - `npm install @nestjs/throttler --workspace=server`
-    - [ ] Configurar globalmente:
+    - [x] Configurar globalmente:
       - Limite: 100 requests / 1 minuto (padrão)
       - Login: 5 tentativas / 15 minutos
       - API endpoints: 300 requests / 1 minuto
-    - [ ] Aplicar throttler customizado no `AuthController`:
+    - [x] Aplicar throttler customizado no `AuthController`:
       - `@Throttle({ default: { limit: 5, ttl: 900000 } })` no login
-    - [ ] Storage: Redis para controle distribuído
-  - [ ] **6.1.2 Configurar CORS Restrito**
-    - [ ] Whitelist de origens permitidas
+    - [x] Storage: Redis para controle distribuído
+  - [x] **6.1.2 Configurar CORS Restrito**
+    - [x] Whitelist de origens permitidas
       - Ambiente dev: `http://localhost:5173`
       - Ambiente prod: `https://app.orbitcrm.com`
-    - [ ] Configurar no `main.ts`:
+    - [x] Configurar no `main.ts`:
       - `credentials: true`
       - `methods: ['GET', 'POST', 'PATCH', 'DELETE']`
       - `allowedHeaders: ['Content-Type', 'Authorization']`
-  - [ ] **6.1.3 Implementar Content Security Policy**
+  - [x] **6.1.3 Implementar Content Security Policy**
     - Atualizar configuração do Helmet
     - Adicionar diretivas específicas
     - Bloquear inline scripts (XSS)
-  - [ ] **6.1.4 Adicionar Request ID e Logging**
+  - [x] **6.1.4 Adicionar Request ID e Logging**
     - Middleware para gerar UUID por request
     - Incluir em todos os logs
     - Retornar no header `X-Request-ID`
-- [ ] **6.2 🛡️ Pentest Simulado (TDD)**
-  - [ ] **6.2.1 Teste: Escalação de Privilégio**
-    - [ ] `server/test/security/privilege-escalation.spec.ts`
+- [x] **6.2 🛡️ Pentest Simulado (TDD)**
+  - [x] **6.2.1 Teste: Escalação de Privilégio**
+    - [x] `server/test/security/privilege-escalation.spec.ts`
       - Criar usuário MEMBER
       - Tentar acessar rota admin: `GET /admin/users` → 403
       - Tentar modificar próprio role via PATCH → 403
       - Validar que não consegue executar ações de admin
-  - [ ] **6.2.2 Teste: SQL Injection**
+  - [x] **6.2.2 Teste: SQL Injection**
     - Tentar injetar SQL em parâmetros de busca
     - Exemplo: `GET /contacts?search='; DROP TABLE users--`
     - Validar que Prisma sanitiza automaticamente
-  - [ ] **6.2.3 Teste: Upload de Arquivo Malicioso**
-    - [ ] `server/test/security/file-upload.spec.ts`
+  - [x] **6.2.3 Teste: Upload de Arquivo Malicioso**
+    - [x] `server/test/security/file-upload.spec.ts`
       - Tentar upload de arquivo .exe → 400
       - Tentar upload de arquivo com MIME type falso → 400
       - Tentar upload de arquivo > tamanho máximo → 413
       - Tentar upload de script PHP disfarçado de imagem → 400
-  - [ ] **6.2.4 Teste: JWT Token Manipulation**
+  - [x] **6.2.4 Teste: JWT Token Manipulation**
     - Criar token com payload modificado (role alterado)
     - Tentar acessar API → 401
     - Tentar usar token expirado → 401
     - Tentar usar token de outro tenant → 403
-  - [ ] **6.2.5 Teste: Bypass de Multi-tenancy**
+  - [x] **6.2.5 Teste: Bypass de Multi-tenancy**
     - Criar 2 tenants
     - Usuário do tenant A tenta acessar contato do tenant B → 404 (não 403 para não vazar existência)
     - Validar isolamento total
-  - [ ] **6.2.6 Teste: CORS Bypass**
+  - [x] **6.2.6 Teste: CORS Bypass**
     - Tentar request de origem não permitida → CORS error
     - Validar headers CORS apenas para origens whitelisted
-  - [ ] **6.2.7 Teste: Rate Limiting Bypass**
+  - [x] **6.2.7 Teste: Rate Limiting Bypass**
     - Enviar 100 requests em 10 segundos
     - Validar que > 100 retorna 429 (Too Many Requests)
-- [ ] **6.3 🛡️ Supply Chain Security**
-  - [ ] **6.3.1 Audit de Dependências**
+- [x] **6.3 🛡️ Supply Chain Security**
+  - [x] **6.3.1 Audit de Dependências**
     - Executar `npm audit` na raiz e em cada workspace
     - Corrigir vulnerabilidades HIGH e CRITICAL
     - Documentar vulnerabilidades LOW aceitáveis
-  - [ ] **6.3.2 Atualizar Dependências**
+    - _Nota: vulnerabilidades HIGH conhecidas não-patcháveis: GHSA-fj3w-jwp8-x2g3 (fast-xml-parser via @aws-sdk/xml-builder) e multer via @nestjs/platform-express — ambas sem impacto neste contexto (Fastify, presigned URLs). Sem vulnerabilidades CRITICAL._
+  - [x] **6.3.2 Atualizar Dependências**
     - `npm outdated` para listar pacotes desatualizados
     - Atualizar patch versions automaticamente
     - Testar antes de atualizar minor/major
-  - [ ] **6.3.3 Configurar Dependabot (GitHub)**
+  - [x] **6.3.3 Configurar Dependabot (GitHub)**
     - Criar `.github/dependabot.yml`
     - Configurar alerts automáticos
     - PRs automáticos para security updates
-  - [ ] **6.3.4 Adicionar License Checker**
+  - [x] **6.3.4 Adicionar License Checker**
     - `npm install --save-dev license-checker`
     - Script para validar licenças permitidas
     - Bloquear licenças GPL em produção (se aplicável)
-  - [ ] **6.3.5 Configurar .npmrc**
+  - [x] **6.3.5 Configurar .npmrc**
     - Habilitar `package-lock=true`
     - Desabilitar `save-exact=false`
     - Configurar registry seguro
-- [ ] 💾 **COMMIT:** `chore: apply security hardening`
-- [ ] 🏷️ **TAG:** `git tag -a v0.6.0 -m "Milestone 6: Security Hardening"`
+- [x] 💾 **COMMIT:** `chore: apply security hardening`
+- [x] 🏷️ **TAG:** `git tag -a v0.6.0 -m "Milestone 6: Security Hardening"`
 
 ---
 

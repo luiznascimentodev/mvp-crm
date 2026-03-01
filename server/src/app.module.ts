@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
+import { ConditionalThrottlerGuard } from './common/guards/conditional-throttler.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { envSchema } from './common/env/env.validation';
@@ -49,6 +52,18 @@ import { DashboardModule } from './dashboard/dashboard.module';
         }),
       },
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 300,
+      },
+      {
+        name: 'auth',
+        ttl: 900_000,
+        limit: 5,
+      },
+    ]),
     PrismaModule,
     AuthModule,
     ContactsModule,
@@ -60,6 +75,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     DashboardModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ConditionalThrottlerGuard },
+  ],
 })
 export class AppModule {}

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import type { Queue } from 'bullmq';
 import { AppModule } from './app.module';
 import { MAIL_QUEUE } from './queues/queues.module';
@@ -25,12 +26,47 @@ async function bootstrap() {
         defaultSrc: [`'self'`],
         styleSrc: [`'self'`, `'unsafe-inline'`],
         imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
-        scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+        scriptSrc: [`'self'`],
+        fontSrc: [`'self'`],
+        connectSrc: [`'self'`],
+        objectSrc: [`'none'`],
+        frameAncestors: [`'none'`],
+        upgradeInsecureRequests: [],
       },
     },
+    crossOriginEmbedderPolicy: false, // necessário para Swagger UI
   });
 
-  app.enableCors(); // Habilitar CORS para desenvolvimento (ajustar em produção)
+  const allowedOrigins =
+    process.env.NODE_ENV === 'production'
+      ? (process.env.CORS_ORIGINS ?? 'https://app.orbitcrm.com').split(',')
+      : ['http://localhost:5173', 'http://localhost:4173'];
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Permitir requests sem origin (server-to-server, Postman, etc)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin not allowed by CORS: ${origin}`), false);
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    exposedHeaders: ['X-Request-ID'],
+  });
+
+  // ── X-Request-ID: injeta UUID em cada request e expõe no response ────────
+  const fastifyApp = app.getHttpAdapter().getInstance();
+  fastifyApp.addHook('onRequest', (request, reply, done) => {
+    const requestId =
+      (request.headers['x-request-id'] as string | undefined) ?? randomUUID();
+    // Armazena no request para uso nos logs
+    (request as unknown as Record<string, unknown>)['requestId'] = requestId;
+    void reply.header('X-Request-ID', requestId);
+    done();
+  });
 
   // ← REMOVEMOS app.useGlobalFilters() (vai para AppModule)
 
