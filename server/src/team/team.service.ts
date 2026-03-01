@@ -115,6 +115,7 @@ export class TeamService {
       id: invite.id,
       email: invite.email,
       role: invite.role,
+      token: invite.token,
       expiresAt: invite.expiresAt,
       status: invite.status,
     };

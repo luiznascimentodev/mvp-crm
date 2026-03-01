@@ -23,6 +23,9 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1000.0",
     "@aws-sdk/s3-request-presigner": "^3.1000.0",
+    "@bull-board/api": "^6.20.3",
+    "@bull-board/fastify": "^6.20.3",
+    "@bull-board/nestjs": "^6.20.3",
     "@fastify/helmet": "^13.0.2",
     "@fastify/static": "^8.3.0",
     "@nestjs/bullmq": "^11.0.4",
