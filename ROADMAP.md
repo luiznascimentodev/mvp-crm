@@ -771,99 +771,99 @@
 
 ---
 
-## 🚩 Milestone 4: Processamento Assíncrono (Workers)
+    ## 🚩 Milestone 4: Processamento Assíncrono (Workers)
 
-**Objetivo:** Filas para tarefas pesadas.
+    **Objetivo:** Filas para tarefas pesadas.
 
-- [ ] **4.1 📐 BullMQ Setup**
-  - [ ] **4.1.1 Instalar Dependências**
-    - `npm install @nestjs/bullmq bullmq --workspace=server`
-    - Redis já está no Docker Compose (Milestone 0)
-  - [ ] **4.1.2 Configurar BullModule**
-    - [ ] Criar `server/src/queues/queues.module.ts`
-    - [ ] Importar `BullModule.forRoot()`:
-      - Configurar conexão Redis do `.env`
-      - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
-    - [ ] Registrar fila `mail-queue`:
-      - `BullModule.registerQueue({ name: 'mail-queue' })`
-  - [ ] **4.1.3 Adicionar Variáveis de Ambiente**
-    - Adicionar no `server/.env`: `REDIS_HOST=localhost`, `REDIS_PORT=6379`
-    - Validar com Zod em `env.validation.ts`
-- [ ] 💾 **COMMIT:** `chore: setup bullmq`
-- [ ] **4.2 Workers & Invites**
-  - [ ] **4.2.1 Criar Schema de Convite**
-    - [ ] Adicionar model `TeamInvite` no Prisma:
-      - id, tenantId, email, role, invitedBy, token, expiresAt, acceptedAt
-      - Status: PENDING, ACCEPTED, EXPIRED
-    - [ ] Migration
-  - [ ] **4.2.2 Criar MailProcessor (Worker)**
-    - [ ] Criar `server/src/queues/processors/mail.processor.ts`
-      - `@Processor('mail-queue')`
-      - Método `@Process('send-invite')`:
-        - Recebe payload: `{ email, inviteLink, inviterName }`
-        - Montar template HTML de email
-        - Enviar email via SMTP (Nodemailer) ou serviço (SendGrid, Resend)
-        - Logar sucesso/falha
-      - Retry automático (3 tentativas com backoff exponencial)
-  - [ ] **4.2.3 Configurar Nodemailer**
-    - `npm install nodemailer @types/nodemailer --workspace=server`
-    - Configurar transporter SMTP
-    - Variáveis `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
-  - [ ] **4.2.4 Criar InviteMemberService (Producer)**
-    - [ ] Criar `server/src/team/team.service.ts`
-      - Injetar `@InjectQueue('mail-queue')`
-      - Método `inviteMember(email, role, invitedBy)`:
-        - Gerar token único (JWT ou UUID)
-        - Criar registro `TeamInvite` no banco
-        - Adicionar job na fila:
-          ```ts
-          await mailQueue.add('send-invite', {
-            email,
-            inviteLink: `https://app.com/accept-invite/${token}`,
-            inviterName: invitedBy.name,
-          });
-          ```
-        - Retornar sucesso
-  - [ ] **4.2.5 Criar TeamController**
-    - `POST /team/invite` → Adiciona convite na fila
-    - `POST /team/accept/:token` → Aceita convite (cria usuário)
-    - `GET /team/invites` → Lista convites pendentes
-  - [ ] **4.2.6 Testes TDD**
-    - Mockar BullMQ Queue
-    - Teste: Criar convite adiciona job na fila
-    - Teste: Worker envia email (mockar Nodemailer)
-    - Teste: Retry em caso de falha
-  - [ ] **4.2.7 Dashboard BullMQ (Opcional)**
-    - Instalar `@bull-board/nestjs`
-    - Configurar em `/admin/queues`
-    - Visualizar jobs: pending, completed, failed
-- [ ] 💾 **COMMIT:** `feat: mail processor and invite logic`
-- [ ] **4.3 Frontend: Team UI**
-  - [ ] **4.3.1 Criar Página de Equipe**
-    - [ ] Criar `web/src/pages/team/team.tsx`
-      - Listar membros do time (com roles)
-      - Listar convites pendentes
-      - Botão "Convidar Membro"
-  - [ ] **4.3.2 Modal de Convite**
-    - [ ] Criar componente `<InviteMemberDialog>`
-      - Form: Email, Role (select)
-      - Submit: POST `/team/invite`
-      - Loading state
-      - Sucesso: Fechar modal + toast
-  - [ ] **4.3.3 Página de Aceitar Convite**
-    - [ ] Criar `web/src/pages/accept-invite/:token.tsx`
-      - Exibir informações do convite
-      - Form: Criar senha
-      - Submit: POST `/team/accept/:token`
-      - Redirecionar para dashboard
-  - [ ] **4.3.4 Testes E2E**
-    - Teste: Convidar membro
-    - Teste: Email recebido (mock)
-    - Teste: Aceitar convite
-- [ ] 💾 **COMMIT:** `feat(web): team management ui`
-- [ ] 🏷️ **TAG:** `git tag -a v0.4.5 -m "Milestone 4: Async Teams"`
+    - [x] **4.1 📐 BullMQ Setup**
+      - [x] **4.1.1 Instalar Dependências**
+        - `npm install @nestjs/bullmq bullmq --workspace=server`
+        - Redis já está no Docker Compose (Milestone 0)
+      - [x] **4.1.2 Configurar BullModule**
+        - [x] Criar `server/src/queues/queues.module.ts`
+        - [x] Importar `BullModule.forRoot()`:
+          - Configurar conexão Redis do `.env`
+          - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+        - [x] Registrar fila `mail-queue`:
+          - `BullModule.registerQueue({ name: 'mail-queue' })`
+      - [x] **4.1.3 Adicionar Variáveis de Ambiente**
+        - Adicionar no `server/.env`: `REDIS_HOST=localhost`, `REDIS_PORT=6379`
+        - Validar com Zod em `env.validation.ts`
+    - [x] 💾 **COMMIT:** `chore: setup bullmq`
+    - [x] **4.2 Workers & Invites**
+      - [x] **4.2.1 Criar Schema de Convite**
+        - [x] Adicionar model `TeamInvite` no Prisma:
+          - id, tenantId, email, role, invitedBy, token, expiresAt, acceptedAt
+          - Status: PENDING, ACCEPTED, EXPIRED
+        - [x] Migration
+      - [x] **4.2.2 Criar MailProcessor (Worker)**
+        - [x] Criar `server/src/queues/processors/mail.processor.ts`
+          - `@Processor('mail-queue')`
+          - Método `@Process('send-invite')`:
+            - Recebe payload: `{ email, inviteLink, inviterName }`
+            - Montar template HTML de email
+            - Enviar email via SMTP (Nodemailer) ou serviço (SendGrid, Resend)
+            - Logar sucesso/falha
+          - Retry automático (3 tentativas com backoff exponencial)
+      - [x] **4.2.3 Configurar Nodemailer**
+        - `npm install nodemailer @types/nodemailer --workspace=server`
+        - Configurar transporter SMTP
+        - Variáveis `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+      - [x] **4.2.4 Criar InviteMemberService (Producer)**
+        - [x] Criar `server/src/team/team.service.ts`
+          - Injetar `@InjectQueue('mail-queue')`
+          - Método `inviteMember(email, role, invitedBy)`:
+            - Gerar token único (JWT ou UUID)
+            - Criar registro `TeamInvite` no banco
+            - Adicionar job na fila:
+              ```ts
+              await mailQueue.add('send-invite', {
+                email,
+                inviteLink: `https://app.com/accept-invite/${token}`,
+                inviterName: invitedBy.name,
+              });
+              ```
+            - Retornar sucesso
+      - [x] **4.2.5 Criar TeamController**
+        - `POST /team/invite` → Adiciona convite na fila
+        - `POST /team/accept/:token` → Aceita convite (cria usuário)
+        - `GET /team/invites` → Lista convites pendentes
+      - [x] **4.2.6 Testes TDD**
+        - Mockar BullMQ Queue
+        - Teste: Criar convite adiciona job na fila
+        - Teste: Worker envia email (mockar Nodemailer)
+        - Teste: Retry em caso de falha
+      - [ ] **4.2.7 Dashboard BullMQ (Opcional)**
+        - Instalar `@bull-board/nestjs`
+        - Configurar em `/admin/queues`
+        - Visualizar jobs: pending, completed, failed
+    - [x] 💾 **COMMIT:** `feat: mail processor and invite logic`
+    - [x] **4.3 Frontend: Team UI**
+      - [x] **4.3.1 Criar Página de Equipe**
+        - [x] Criar `web/src/pages/team/team-page.tsx`
+          - Listar membros do time (com roles)
+          - Listar convites pendentes
+          - Botão "Convidar Membro"
+      - [x] **4.3.2 Modal de Convite**
+        - [x] Criar componente `<InviteMemberDialog>`
+          - Form: Email, Role (select)
+          - Submit: POST `/team/invite`
+          - Loading state
+          - Sucesso: Fechar modal + toast
+      - [x] **4.3.3 Página de Aceitar Convite**
+        - [x] Criar `web/src/pages/team/accept-invite-page.tsx`
+          - Exibir informações do convite
+          - Form: Criar senha
+          - Submit: POST `/team/accept/:token`
+          - Redirecionar para dashboard
+      - [ ] **4.3.4 Testes E2E**
+        - Teste: Convidar membro
+        - Teste: Email recebido (mock)
+        - Teste: Aceitar convite
+    - [x] 💾 **COMMIT:** `feat(web): team management ui`
+    - [x] 🏷️ **TAG:** `git tag -a v0.4.5 -m "Milestone 4: Async Teams"`
 
----
+    ---
 
 ## 🚩 Milestone 5: Analytics & Testes E2E
 
