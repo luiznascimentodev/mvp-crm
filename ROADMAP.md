@@ -617,8 +617,8 @@
     - Controles: Previous, Next, Page numbers
     - Mostrar total de registros
     - Sincronizar com query params da URL
-  - [ ] **2.6.6 Testes E2E Frontend (Playwright)**
-    - [ ] Configurar Playwright
+  - [x] **2.6.6 Testes E2E Frontend (Playwright)**
+    - [x] Configurar Playwright
       - `npm create playwright@latest --workspace=web`
       - Configurar browsers: chromium, firefox
     - [x] Criar `web/tests/contacts.spec.ts`
@@ -637,18 +637,18 @@
 
 **Objetivo:** Colaboração síncrona e Uploads.
 
-- [ ] **3.1 📊 Atualizar Diagrama de Classes**
-  - [ ] **3.1.1 Modelar Entidade Deal**
+- [x] **3.1 📊 Atualizar Diagrama de Classes**
+  - [x] **3.1.1 Modelar Entidade Deal**
     - Adicionar classe `Deal` no diagrama
     - Atributos: id, tenantId, contactId, title, value, stage, probability, expectedCloseDate, ownerId, createdAt, updatedAt, deletedAt
     - Relacionamentos: `Deal` N:1 `Contact`, `Deal` N:1 `User` (owner)
-  - [ ] **3.1.2 Modelar Entidade PipelineStage**
+  - [x] **3.1.2 Modelar Entidade PipelineStage**
     - Atributos: id, tenantId, name, order, probability
     - Enum stages: LEAD, QUALIFICATION, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST
-  - [ ] **3.1.3 Modelar Entidade Attachment**
+  - [x] **3.1.3 Modelar Entidade Attachment**
     - Atributos: id, entityType, entityId, fileName, fileSize, mimeType, s3Key, uploadedBy, uploadedAt
     - Relacionamento polimórfico (Deal, Contact, Lead)
-- [ ] 💾 **COMMIT:** `docs: update class diagram with pipeline module`
+- [x] 💾 **COMMIT:** `docs: update class diagram with pipeline module`
 - [x] **3.2 ☁️ Storage Module (S3/MinIO)**
   - [x] **3.2.1 Configurar MinIO no Docker Compose**
     - Adicionar serviço MinIO no `docker-compose.yml`

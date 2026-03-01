@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "echo 'No tests yet'",
+    "test": "echo 'No unit tests yet'",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "generate:sdk": "openapi-ts"
   },
   "dependencies": {
@@ -38,6 +41,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@hey-api/openapi-ts": "^0.89.0",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.2.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
