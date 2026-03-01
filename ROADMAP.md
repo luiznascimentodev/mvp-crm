@@ -833,7 +833,7 @@
         - Teste: Criar convite adiciona job na fila
         - Teste: Worker envia email (mockar Nodemailer)
         - Teste: Retry em caso de falha
-      - [ ] **4.2.7 Dashboard BullMQ (Opcional)**
+      - [x] **4.2.7 Dashboard BullMQ (Opcional)**
         - Instalar `@bull-board/nestjs`
         - Configurar em `/admin/queues`
         - Visualizar jobs: pending, completed, failed
@@ -856,7 +856,7 @@
           - Form: Criar senha
           - Submit: POST `/team/accept/:token`
           - Redirecionar para dashboard
-      - [ ] **4.3.4 Testes E2E**
+      - [x] **4.3.4 Testes E2E**
         - Teste: Convidar membro
         - Teste: Email recebido (mock)
         - Teste: Aceitar convite
