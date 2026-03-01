@@ -38,6 +38,7 @@ model Tenant {
   activities  Activity[]
   auditLogs   AuditLog[]
   attachments Attachment[]
+  teamInvites TeamInvite[]
 
   @@map("tenants")
 }
@@ -93,6 +94,7 @@ model User {
   createdActivities Activity[]   @relation("ActivityCreator")
   auditLogs         AuditLog[]
   attachments       Attachment[] @relation("AttachmentUploader")
+  invitesSent       TeamInvite[] @relation("InvitedBy")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -340,6 +342,51 @@ model Attachment {
   @@index([tenantId])
   @@index([entityType, entityId])
   @@map("attachments")
+}
+
+// ============================================================================
+// 📨 TEAM INVITE (Convites de Equipe)
+// ============================================================================
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+/// Convite para um novo membro ingressar no tenant via email
+model TeamInvite {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Contexto Multi-tenant
+  tenantId String @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Convidado
+  email String @db.VarChar(255)
+  role  Role   @default(MEMBER)
+
+  // Quem convidou
+  invitedById String @db.Uuid
+  invitedBy   User   @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  // Token de aceite (único, gerado na criação)
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @db.Timestamptz
+
+  // Status
+  status     InviteStatus @default(PENDING)
+  acceptedAt DateTime?    @db.Timestamptz
+
+  // Auditoria
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([tenantId])
+  @@index([token])
+  @@index([email])
+  @@index([status])
+  @@map("team_invites")
 }
 
 // ============================================================================

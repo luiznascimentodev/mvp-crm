@@ -28,6 +28,17 @@ export const envSchema = z.object({
   // Redis
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
+
+  // SMTP (Nodemailer)
+  SMTP_HOST: z.string().default('smtp.ethereal.email'),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().email().default('noreply@orbit-crm.app'),
+
+  // Frontend (para links em emails)
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

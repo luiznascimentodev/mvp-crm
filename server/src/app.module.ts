@@ -9,6 +9,8 @@ import { ContactsModule } from './contacts/contacts.module';
 import { DealsModule } from './deals/deals.module';
 import { StorageModule } from './storage/storage.module';
 import { EventsModule } from './events/events.module';
+import { QueuesModule } from './queues/queues.module';
+import { TeamModule } from './team/team.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -52,6 +54,8 @@ import { PrismaModule } from './prisma/prisma.module';
     DealsModule,
     StorageModule,
     EventsModule,
+    QueuesModule,
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [AppService],
