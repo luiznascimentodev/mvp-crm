@@ -69,7 +69,7 @@ import { LeadsModule } from './leads/leads.module';
     ContactsModule,
     StorageModule,
     EventsModule,
-    QueuesModule,
+    QueuesModule.forRoot(),
     TeamModule,
     DashboardModule,
     LeadsModule,

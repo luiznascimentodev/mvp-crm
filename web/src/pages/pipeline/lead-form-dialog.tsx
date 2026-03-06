@@ -53,7 +53,7 @@ const DEFAULT: FormValues = {
   notes: '',
 };
 
-interface Props {
+interface LeadFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lead?: Lead | null;
@@ -62,11 +62,16 @@ interface Props {
   loading?: boolean;
 }
 
-// ── Seletor visual de estágio ────────────────────────────────────────────────
 interface StageSelectorProps {
   value: LeadStage;
   onChange: (stage: LeadStage) => void;
 }
+
+interface StageSelectorProps {
+  value: LeadStage;
+  onChange: (stage: LeadStage) => void;
+}
+
 function StageSelector({ value, onChange }: StageSelectorProps) {
   return (
     <div className="flex gap-1.5 flex-wrap">
@@ -81,11 +86,19 @@ function StageSelector({ value, onChange }: StageSelectorProps) {
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
               isSelected
-                ? cn(colors.bg, colors.text, 'border-transparent ring-2 ring-offset-1', colors.dot.replace('bg-', 'ring-'))
-                : 'border-border text-muted-foreground hover:border-muted-foreground bg-background',
+                ? cn(
+                    colors.badge,
+                    'border-transparent ring-1 ring-offset-1 ring-border',
+                  )
+                : 'border-border/40 text-muted-foreground hover:border-border bg-transparent',
             )}
           >
-            <span className={cn('w-1.5 h-1.5 rounded-full', isSelected ? colors.dot : 'bg-muted-foreground/40')} />
+            <span
+              className={cn(
+                'w-1.5 h-1.5 rounded-full shrink-0',
+                isSelected ? colors.dot : 'bg-muted-foreground/30',
+              )}
+            />
             {LEAD_STAGE_LABELS[stage]}
           </button>
         );
@@ -94,7 +107,6 @@ function StageSelector({ value, onChange }: StageSelectorProps) {
   );
 }
 
-// ── Modal principal ──────────────────────────────────────────────────────────
 export function LeadFormDialog({
   open,
   onOpenChange,
@@ -102,7 +114,7 @@ export function LeadFormDialog({
   defaultStage = 'new',
   onSubmit,
   loading,
-}: Props) {
+}: LeadFormDialogProps) {
   const {
     register,
     handleSubmit,
@@ -130,196 +142,216 @@ export function LeadFormDialog({
     }
   }, [open, lead, defaultStage, reset]);
 
-  const onFormSubmit = async (data: FormValues) => {
+  const onFormSubmit = async (formData: FormValues) => {
     await onSubmit({
-      name: data.name,
-      email: data.email || undefined,
-      phone: data.phone || undefined,
-      company: data.company || undefined,
-      source: data.source || undefined,
-      status: data.status,
-      notes: data.notes || undefined,
+      name: formData.name,
+      email: formData.email || undefined,
+      phone: formData.phone || undefined,
+      company: formData.company || undefined,
+      source: formData.source || undefined,
+      status: formData.status,
+      notes: formData.notes || undefined,
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="pb-1">
-          <DialogTitle className="text-lg font-bold">
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90vh] p-0 gap-0">
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-border/50 shrink-0">
+          <DialogTitle className="text-base font-semibold">
             {isEditing ? 'Editar Lead' : 'Novo Lead'}
           </DialogTitle>
         </DialogHeader>
 
         <form
-          onSubmit={(e) => void handleSubmit(onFormSubmit)(e)}
-          className="space-y-5"
+          onSubmit={(event) => void handleSubmit(onFormSubmit)(event)}
+          className="flex flex-col flex-1 min-h-0"
         >
-          {/* ── Seção 1: Identificação ── */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Identificação
-            </p>
+          <div className="flex-1 overflow-y-auto orbit-scroll px-6 py-5 space-y-5">
+            <div className="space-y-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                Identificação
+              </p>
 
-            {/* Nome */}
-            <div className="space-y-1.5">
-              <Label htmlFor="name">
-                <span className="flex items-center gap-1.5">
-                  <User2 size={13} />
-                  Nome <span className="text-destructive">*</span>
-                </span>
-              </Label>
-              <Input
-                id="name"
-                autoFocus
-                placeholder="João Silva"
-                {...register('name', { required: 'Nome é obrigatório' })}
-                className={errors.name ? 'border-destructive' : ''}
-              />
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name.message}</p>
-              )}
-            </div>
-
-            {/* Empresa */}
-            <div className="space-y-1.5">
-              <Label htmlFor="company">
-                <span className="flex items-center gap-1.5">
-                  <Building2 size={13} />
-                  Empresa
-                </span>
-              </Label>
-              <Input
-                id="company"
-                placeholder="Acme Corp"
-                {...register('company')}
-              />
-            </div>
-          </div>
-
-          {/* ── Seção 2: Contato ── */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Contato
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email">
-                  <span className="flex items-center gap-1.5">
-                    <Mail size={13} />
-                    E-mail
-                  </span>
+                <Label
+                  htmlFor="name"
+                  className="flex items-center gap-1.5 text-xs"
+                >
+                  <User2 size={12} />
+                  Nome <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="joao@empresa.com"
-                  {...register('email', {
-                    validate: (v) =>
-                      !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'E-mail inválido',
-                  })}
-                  className={errors.email ? 'border-destructive' : ''}
+                  id="name"
+                  autoFocus
+                  placeholder="João Silva"
+                  className={cn(
+                    'h-9 text-sm',
+                    errors.name && 'border-destructive',
+                  )}
+                  {...register('name', { required: 'Nome é obrigatório' })}
                 />
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email.message}</p>
+                {errors.name && (
+                  <p className="text-xs text-destructive">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="phone">
-                  <span className="flex items-center gap-1.5">
-                    <Phone size={13} />
-                    Telefone
-                  </span>
+                <Label
+                  htmlFor="company"
+                  className="flex items-center gap-1.5 text-xs"
+                >
+                  <Building2 size={12} />
+                  Empresa
                 </Label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+55 11 99999-9999"
-                  {...register('phone')}
+                  id="company"
+                  placeholder="Acme Corp"
+                  className="h-9 text-sm"
+                  {...register('company')}
+                />
+              </div>
+            </div>
+
+            {/* ── Seção 2: Contato ── */}
+            <div className="space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Contato
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">
+                    <span className="flex items-center gap-1.5">
+                      <Mail size={13} />
+                      E-mail
+                    </span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="joao@empresa.com"
+                    {...register('email', {
+                      validate: (v) =>
+                        !v ||
+                        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ||
+                        'E-mail inválido',
+                    })}
+                    className={errors.email ? 'border-destructive' : ''}
+                  />
+                  {errors.email && (
+                    <p className="text-xs text-destructive">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone">
+                    <span className="flex items-center gap-1.5">
+                      <Phone size={13} />
+                      Telefone
+                    </span>
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+55 11 99999-9999"
+                    {...register('phone')}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                Origem
+              </p>
+              <Controller
+                name="source"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) =>
+                      field.onChange(value as LeadSource)
+                    }
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Como chegou este lead?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LEAD_SOURCES.map((source) => (
+                        <SelectItem key={source} value={source}>
+                          <span className="flex items-center gap-2 text-sm">
+                            <span>{LEAD_SOURCE_ICONS[source]}</span>
+                            {LEAD_SOURCE_LABELS[source]}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                Estágio no pipeline
+              </p>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <StageSelector
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                Notas
+              </p>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="notes"
+                  className="flex items-center gap-1.5 text-xs"
+                >
+                  <FileText size={12} />
+                  Observações
+                </Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Contexto, interesse demonstrado, próximos passos..."
+                  rows={3}
+                  className="resize-none text-sm"
+                  {...register('notes')}
                 />
               </div>
             </div>
           </div>
 
-          {/* ── Seção 3: Origem ── */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Origem do lead
-            </p>
-            <Controller
-              name="source"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={(v) => field.onChange(v as LeadSource)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Como chegou este lead?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEAD_SOURCES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        <span className="flex items-center gap-2">
-                          <span>{LEAD_SOURCE_ICONS[s]}</span>
-                          {LEAD_SOURCE_LABELS[s]}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          {/* ── Seção 4: Estágio no pipeline ── */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Estágio no pipeline
-            </p>
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <StageSelector value={field.value} onChange={field.onChange} />
-              )}
-            />
-          </div>
-
-          {/* ── Seção 5: Notas ── */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Notas
-            </p>
-            <div className="space-y-1.5">
-              <Label htmlFor="notes">
-                <span className="flex items-center gap-1.5">
-                  <FileText size={13} />
-                  Observações sobre o lead
-                </span>
-              </Label>
-              <Textarea
-                id="notes"
-                placeholder="Contexto, interesse demonstrado, próximos passos..."
-                rows={3}
-                className="resize-none text-sm"
-                {...register('notes')}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="pt-1 gap-2">
+          <DialogFooter className="px-6 py-4 border-t border-border/50 shrink-0 gap-2">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="min-w-[120px]">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={loading}
+              className="min-w-[110px]"
+            >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" />

@@ -1,5 +1,11 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class LoginDto {
   @ApiProperty({
@@ -20,11 +26,21 @@ export class LoginDto {
   @IsNotEmpty({ message: 'Password is required' })
   password: string;
 
-  @ApiProperty({
-    example: 'tenant-uuid-here',
-    description: 'Tenant ID for multi-tenancy isolation',
+  @ApiPropertyOptional({
+    example: 'minha-empresa',
+    description:
+      'Workspace slug (e.g. @minha-empresa) — preferred over tenantId',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Tenant ID is required' })
-  tenantId: string;
+  @IsOptional()
+  slug?: string;
+
+  @ApiPropertyOptional({
+    example: 'tenant-uuid-here',
+    description:
+      'Tenant ID for multi-tenancy isolation (legacy — use slug instead)',
+  })
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
 }

@@ -18,12 +18,12 @@ export const envSchema = z.object({
     .default('1h')
     .describe('JWT token expiration time'),
 
-  // Storage (MinIO / S3)
-  STORAGE_ENDPOINT: z.string().url().describe('S3/MinIO endpoint URL'),
+  // Storage (MinIO / S3) — opcional; quando ausente, endpoints retornam 503
+  STORAGE_ENDPOINT: z.string().url().optional(),
   STORAGE_REGION: z.string().default('us-east-1'),
-  STORAGE_ACCESS_KEY: z.string().min(1),
-  STORAGE_SECRET_KEY: z.string().min(1),
-  STORAGE_BUCKET: z.string().min(1).default('orbit-crm'),
+  STORAGE_ACCESS_KEY: z.string().optional(),
+  STORAGE_SECRET_KEY: z.string().optional(),
+  STORAGE_BUCKET: z.string().default('orbit-crm'),
 
   // Redis
   REDIS_HOST: z.string().default('localhost'),

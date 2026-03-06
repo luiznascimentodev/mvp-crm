@@ -6,18 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma/prisma.service';
 import { EnvConfig } from '../common/env/env.validation';
 import { Role } from '../common/enums/role.enum';
-import { MAIL_QUEUE } from '../queues/queues.module';
-import {
-  SEND_INVITE_JOB,
-  SendInvitePayload,
-} from '../queues/processors/mail.processor';
+import { MailService } from '../queues/mail.service';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { InviteStatus } from '@prisma/client';
@@ -31,7 +25,7 @@ export class TeamService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService<EnvConfig, true>,
-    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
+    private readonly mailService: MailService,
   ) {}
 
   // ──────────────────────────────────────────────────────────────────
@@ -98,18 +92,24 @@ export class TeamService {
       include: { invitedBy: { select: { name: true } } },
     });
 
-    // Enfileirar job de email
+    // Enviar email de convite (direto via SMTP — sem fila Redis)
     const inviteLink = `${this.config.get('FRONTEND_URL', { infer: true }) ?? 'http://localhost:5173'}/accept-invite/${token}`;
-    const payload: SendInvitePayload = {
-      email,
-      inviteLink,
-      inviterName: invite.invitedBy.name,
-      tenantName: tenant.name,
-      role,
-      expiresAt: expiresAt.toLocaleDateString('pt-BR'),
-    };
-    await this.mailQueue.add(SEND_INVITE_JOB, payload);
-    this.logger.log(`Convite criado para ${email} (job enfileirado)`);
+    await this.mailService
+      .sendInvite({
+        email,
+        inviteLink,
+        inviterName: invite.invitedBy.name,
+        tenantName: tenant.name,
+        role,
+        expiresAt: expiresAt.toLocaleDateString('pt-BR'),
+      })
+      .catch((err: unknown) => {
+        // Nao falhar o convite se o email nao for enviado
+        this.logger.error(
+          `Falha ao enviar email de convite para ${email}: ${String(err)}`,
+        );
+      });
+    this.logger.log(`Convite criado para ${email}`);
 
     return {
       id: invite.id,

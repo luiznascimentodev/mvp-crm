@@ -27,6 +27,30 @@ https://github.com/luiznascimentodev/mvp-crm
 
 ---
 
+## 🚀 Acesso Rápido
+
+> Suba a infraestrutura e rode o seed antes de logar (veja [Como Rodar Localmente](#-como-rodar-localmente)).
+
+Na tela de login, preencha três campos:
+
+| Campo     | O que digitar                         |
+| --------- | ------------------------------------- |
+| Workspace | slug da empresa, ex: `orbit-demo-pro` |
+| E-mail    | ex: `owner@orbitdemo.com`             |
+| Senha     | `Senha@123`                           |
+
+**Credencial mais rápida para testar:**
+
+```
+Workspace : orbit-demo-pro
+E-mail    : owner@orbitdemo.com
+Senha     : Senha@123
+```
+
+> ⚠️ No campo Workspace **não** inclua o `@` — digite apenas o slug (`orbit-demo-pro`, não `@orbit-demo-pro`).
+
+---
+
 ## 🌟 Visão Geral do Projeto
 
 **Orbit CRM** é uma plataforma de CRM com arquitetura de **Monólito Modular** baseada em **NestJS 11**, simulando um ambiente corporativo real. O sistema cobre o ciclo completo de prospecção: captura de leads via formulário público, gestão no funil Kanban visual com arrastar e soltar em tempo real, conversão de leads em contatos e gestão de equipe multi-tenant com convites por e-mail.
@@ -47,12 +71,15 @@ https://github.com/luiznascimentodev/mvp-crm
 ## ✨ Funcionalidades Implementadas
 
 ### 🔐 Autenticação & RBAC
-- Login com JWT (accessToken em memória/localStorage)
-- Registro de usuários por workspace (`tenantId`)
+
+- Login com `@workspace` (slug da empresa) + e-mail + senha — sem precisar copiar UUID
+- Compatibilidade retroativa com `tenantId` UUID direto via API
+- JWT (accessToken em memória/localStorage)
 - Hierarquia de permissões: `OWNER > ADMIN > MEMBER`
 - Guards: `AuthGuard('jwt')` + `RolesGuard` + `LeadOwnershipGuard`
 
 ### 🎯 Pipeline de Prospecção (Leads)
+
 - Funil Kanban visual com 7 etapas: `Novo → Contactado → Qualificado → Proposta → Negociação → Ganho / Perdido`
 - Drag & Drop fluido com placeholder animado (`@hello-pangea/dnd`)
 - Sincronização em tempo real via WebSocket — movimentações refletidas instantaneamente para toda a equipe
@@ -62,18 +89,15 @@ https://github.com/luiznascimentodev/mvp-crm
 - Conversão de lead em contato (`POST /leads/:id/convert`)
 - Filtragem por responsável, fonte e status; MEMBER vê apenas seus próprios leads
 
-### 👥 Contatos
-- CRUD completo com soft-delete
-- Campos: nome, empresa, cargo, e-mail, telefone, website, cidade, estado, país, notas
-- Scoping automático por tenant e por responsável (MEMBER)
-
 ### 📊 Dashboard Analítico
+
 - KPIs em tempo real: total de contatos, leads ativos, taxa de conversão, leads ganhos
 - Gráfico de linha: leads ao longo do tempo (7 / 30 / 90 dias)
 - Funil de conversão em barras por etapa com cores dinâmicas
 - Ranking de top vendedores por leads ganhos
 
 ### 👨‍👩‍👧 Gestão de Equipe
+
 - Listagem de membros do workspace com papéis e status
 - Envio de convites por e-mail via fila assíncrona (BullMQ + Redis)
 - Aceitação de convite via link tokenizado (`/accept-invite/:token`)
@@ -81,16 +105,19 @@ https://github.com/luiznascimentodev/mvp-crm
 - Remoção de membros
 
 ### 📁 Upload de Arquivos
+
 - Geração de Presigned URLs diretas para MinIO / S3
 - Upload sem proxy no servidor (zero carga na API)
 - Validação de MIME type e tamanho máximo (10 MB)
 
 ### 🔔 Eventos em Tempo Real (WebSockets)
+
 - Gateway Socket.io com autenticação JWT na conexão
 - Salas isoladas por `tenantId`
 - Eventos: `lead.move`, `lead.updated`, `lead.created`, `lead.deleted`
 
 ### 📋 Auditoria
+
 - `AuditLog` registra toda mutação crítica: quem, quando, qual recurso e qual operação
 - Imutável — nunca deletado em cascata
 
@@ -99,38 +126,41 @@ https://github.com/luiznascimentodev/mvp-crm
 ## 🛠️ Stack Tecnológica
 
 ### Backend
-| Camada | Tecnologia |
-|---|---|
-| Runtime | Node.js v24 LTS |
-| Framework | NestJS v11 + FastifyAdapter |
-| Linguagem | TypeScript v5 (strict) |
-| ORM / DB | Prisma v6 + PostgreSQL 17 |
-| Autenticação | Passport.js + JWT + Argon2 |
-| Filas | BullMQ v5 + Redis 7 |
-| Real-time | Socket.io (`@nestjs/websockets`) |
-| Validação | class-validator + class-transformer + Zod (env) |
-| Testes | Vitest (unit + integration) |
-| Docs | Swagger (`@nestjs/swagger`) |
+
+| Camada       | Tecnologia                                      |
+| ------------ | ----------------------------------------------- |
+| Runtime      | Node.js v24 LTS                                 |
+| Framework    | NestJS v11 + FastifyAdapter                     |
+| Linguagem    | TypeScript v5 (strict)                          |
+| ORM / DB     | Prisma v6 + PostgreSQL 17                       |
+| Autenticação | Passport.js + JWT + Argon2                      |
+| Filas        | BullMQ v5 + Redis 7                             |
+| Real-time    | Socket.io (`@nestjs/websockets`)                |
+| Validação    | class-validator + class-transformer + Zod (env) |
+| Testes       | Vitest (unit + integration)                     |
+| Docs         | Swagger (`@nestjs/swagger`)                     |
 
 ### Frontend
-| Camada | Tecnologia |
-|---|---|
-| Core | React v19 + Vite |
-| Estilização | Tailwind CSS v4 + Shadcn/UI |
-| Drag & Drop | @hello-pangea/dnd |
-| State/Fetch | Zustand v5 + TanStack Query v5 |
-| Forms | React Hook Form + Controller |
-| Real-time | Socket.io-client (`useSocket` hook) |
-| Notificações | Sonner (toasts) |
-| Navegação | Command Palette (cmdk) |
+
+| Camada       | Tecnologia                          |
+| ------------ | ----------------------------------- |
+| Core         | React v19 + Vite                    |
+| Estilização  | Tailwind CSS v4 + Shadcn/UI         |
+| Drag & Drop  | @hello-pangea/dnd                   |
+| State/Fetch  | Zustand v5 + TanStack Query v5      |
+| Forms        | React Hook Form + Controller        |
+| Real-time    | Socket.io-client (`useSocket` hook) |
+| Notificações | Sonner (toasts)                     |
+| Navegação    | Command Palette (cmdk)              |
 
 ### Infraestrutura
-| Camada | Tecnologia |
-|---|---|
-| Containers | Docker + Docker Compose |
-| Orquestração | Kubernetes (planejado) |
-| Storage | MinIO local / AWS S3 prod |
-| CI/CD | GitHub Actions (planejado) |
+
+| Camada       | Tecnologia                 |
+| ------------ | -------------------------- |
+| Containers   | Docker + Docker Compose    |
+| Orquestração | Kubernetes (planejado)     |
+| Storage      | MinIO local / AWS S3 prod  |
+| CI/CD        | GitHub Actions (planejado) |
 
 ---
 
@@ -161,7 +191,6 @@ mvp-crm/
 │       │   ├── login.tsx
 │       │   ├── dashboard/           # KPIs + gráficos (Recharts)
 │       │   ├── pipeline/            # Kanban de leads (@hello-pangea/dnd)
-│       │   ├── contacts/            # CRUD de contatos
 │       │   └── team/                # Membros + accept-invite
 │       ├── hooks/use-socket.ts      # Socket.io hooks (lead events)
 │       ├── components/
@@ -177,7 +206,6 @@ mvp-crm/
 ```
 Tenant ──┬── User (OWNER | ADMIN | MEMBER)
          ├── Lead (soft-delete, status: string, ownerId)
-         ├── Contact (soft-delete, ownerId)
          ├── Activity (leadId? | contactId?)
          ├── Attachment
          ├── TeamInvite
@@ -194,6 +222,7 @@ Tenant ──┬── User (OWNER | ADMIN | MEMBER)
 ## 🚀 Como Rodar Localmente
 
 ### Pré-requisitos
+
 - Node.js v20+ (v24 LTS recomendado)
 - Docker & Docker Compose
 
@@ -228,15 +257,28 @@ npm run dev
 
 ### Credenciais de Teste (seed)
 
-| E-mail | Papel | Senha |
-|---|---|---|
-| `owner@orbitdemo.com` | OWNER | `Senha@123` |
-| `admin@orbitdemo.com` | ADMIN | `Senha@123` |
-| `member1@orbitdemo.com` | MEMBER | `Senha@123` |
+**Workspace 1 — `@orbit-demo-pro`**
 
-Tenant: `10000000-0000-4000-a000-000000000001`
+| E-mail                  | Papel  | Senha       |
+| ----------------------- | ------ | ----------- |
+| `owner@orbitdemo.com`   | OWNER  | `Senha@123` |
+| `admin@orbitdemo.com`   | ADMIN  | `Senha@123` |
+| `member1@orbitdemo.com` | MEMBER | `Senha@123` |
+| `member2@orbitdemo.com` | MEMBER | `Senha@123` |
+| `member3@orbitdemo.com` | MEMBER | `Senha@123` |
+
+**Workspace 2 — `@acme-free`**
+
+| E-mail                 | Papel  | Senha       |
+| ---------------------- | ------ | ----------- |
+| `owner@acmefree.com`   | OWNER  | `Senha@123` |
+| `admin@acmefree.com`   | ADMIN  | `Senha@123` |
+| `member1@acmefree.com` | MEMBER | `Senha@123` |
+
+> No campo **Workspace** da tela de login, digite apenas o slug sem `@` (ex: `orbit-demo-pro`).
 
 ### URLs
+
 - **Frontend**: http://localhost:5173
 - **API**: http://localhost:3333
 - **Swagger**: http://localhost:3333/api
@@ -257,8 +299,9 @@ npm run test:cov
 ```
 
 Cobertura inclui:
-- Unitários: `AuthService`, `LeadsService`, `ContactsService`, `DashboardService`, `StorageService`, `EventsGateway`
-- Integração: fluxos completos de auth, leads, contacts, dashboard, team
+
+- Unitários: `AuthService`, `LeadsService`, `DashboardService`, `StorageService`, `EventsGateway`
+- Integração: fluxos completos de auth, leads, dashboard, team
 - Segurança: isolamento multi-tenancy (Tenant A não acessa dados do Tenant B)
 
 ---
@@ -266,15 +309,19 @@ Cobertura inclui:
 ## Diferenciais Técnicos
 
 ### Multi-tenancy com isolamento por coluna
+
 Toda query filtra obrigatoriamente por `tenantId`. `MEMBER` tem scoping adicional por `ownerId`. Testado com spec dedicado de segurança.
 
 ### Kanban real-time colaborativo
+
 Drag & drop com `@hello-pangea/dnd` (estilo Trello) + WebSocket broadcast para todos os membros do tenant. Optimistic update com rollback em caso de erro.
 
 ### Endpoint público de captação
+
 `POST /leads/public/:tenantId` funciona sem autenticação — ideal para embeddar formulários de landing pages em sites externos que alimentam o funil automaticamente.
 
 ### Arquitetura limpa e testável
+
 Controllers finos, Services isolados, DTOs com `class-validator`, variáveis de ambiente validadas com Zod, sem `any` implícito (TypeScript strict).
 
 ---
@@ -282,9 +329,9 @@ Controllers finos, Services isolados, DTOs com `class-validator`, variáveis de 
 ## Roadmap
 
 ### ✅ Concluído
+
 - Autenticação JWT com RBAC completo
 - Pipeline Kanban de leads (7 etapas, drag & drop, real-time)
-- CRUD de contatos com soft-delete
 - Conversão de lead em contato
 - Captura pública de leads (sem auth)
 - Dashboard analítico com gráficos (Recharts)
@@ -295,6 +342,7 @@ Controllers finos, Services isolados, DTOs com `class-validator`, variáveis de 
 - Suite de testes unitários e de integração
 
 ### 🔜 Próximos Passos
+
 - [ ] Atividades vinculadas a leads e contatos (timeline)
 - [ ] Notificações in-app via WebSocket
 - [ ] Relatórios exportáveis (PDF/CSV)
@@ -323,4 +371,3 @@ Controllers finos, Services isolados, DTOs com `class-validator`, variáveis de 
 **Projeto em desenvolvimento ativo — acompanhe o progresso nas Issues e no [Roadmap](ROADMAP.md)**
 
 </div>
-

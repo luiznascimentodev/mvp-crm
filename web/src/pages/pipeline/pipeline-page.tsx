@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DragDropContext,
   Droppable,
@@ -15,14 +15,27 @@ import {
   XCircle,
   Wifi,
   WifiOff,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useSocket } from '@/hooks/use-socket';
-import { fetchLeads, createLead, updateLead, moveLead, deleteLead, convertLead } from './leads.api';
+import {
+  fetchLeads,
+  createLead,
+  updateLead,
+  moveLead,
+  deleteLead,
+  convertLead,
+} from './leads.api';
 import {
   LEAD_FUNNEL_STAGES,
   LEAD_TERMINAL_STAGES,
@@ -37,10 +50,55 @@ import { LeadCard } from './lead-card';
 import { LeadFormDialog } from './lead-form-dialog';
 import { LeadDetailSheet } from './lead-detail-sheet';
 
-// ---------------------------------------------------------------------------
-// Kanban Column
-// ---------------------------------------------------------------------------
-interface ColumnProps {
+const EDGE_ZONE = 120;
+const MAX_SPEED = 18;
+
+function useEdgeScroll(ref: React.RefObject<HTMLElement | null>) {
+  const frameRef = useRef<number | null>(null);
+  const velocityRef = useRef(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    function onMouseMove(event: MouseEvent) {
+      const rect = el!.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const width = rect.width;
+
+      if (x < EDGE_ZONE) {
+        velocityRef.current = -MAX_SPEED * (1 - x / EDGE_ZONE);
+      } else if (x > width - EDGE_ZONE) {
+        velocityRef.current = MAX_SPEED * (1 - (width - x) / EDGE_ZONE);
+      } else {
+        velocityRef.current = 0;
+      }
+    }
+
+    function onMouseLeave() {
+      velocityRef.current = 0;
+    }
+
+    function tick() {
+      if (velocityRef.current !== 0) {
+        el!.scrollLeft += velocityRef.current;
+      }
+      frameRef.current = requestAnimationFrame(tick);
+    }
+
+    el.addEventListener('mousemove', onMouseMove);
+    el.addEventListener('mouseleave', onMouseLeave);
+    frameRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      el.removeEventListener('mousemove', onMouseMove);
+      el.removeEventListener('mouseleave', onMouseLeave);
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    };
+  }, [ref]);
+}
+
+interface KanbanColumnProps {
   stage: LeadStage;
   leads: Lead[];
   onAdd: (stage: LeadStage) => void;
@@ -50,49 +108,56 @@ interface ColumnProps {
   onConvert: (lead: Lead) => void;
 }
 
-function KanbanColumn({ stage, leads, onAdd, onOpen, onEdit, onDelete, onConvert }: ColumnProps) {
-  const c = LEAD_STAGE_COLORS[stage];
+function KanbanColumn({
+  stage,
+  leads,
+  onAdd,
+  onOpen,
+  onEdit,
+  onDelete,
+  onConvert,
+}: KanbanColumnProps) {
+  const colors = LEAD_STAGE_COLORS[stage];
 
   return (
-    <div className="flex flex-col w-[270px] shrink-0">
-      {/* Header */}
-      <div className={cn(
-        'flex items-center justify-between px-3 py-2.5 rounded-t-xl border border-b-0 border-t-2',
-        c.bg, c.border,
-      )}>
-        <div className="flex items-center gap-2 min-w-0">
+    <div className="flex flex-col w-[260px] shrink-0">
+      <div className="flex items-center justify-between px-3 py-2.5 mb-1">
+        <div className="flex items-center gap-2">
+          <div className={cn('w-1.5 h-1.5 rounded-full', colors.dot)} />
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className={cn('text-[11px] font-semibold uppercase tracking-widest truncate cursor-default', c.text)}>
+              <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wide cursor-default">
                 {LEAD_STAGE_LABELS[stage]}
               </span>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+            <TooltipContent side="top" className="max-w-xs text-xs">
               {LEAD_STAGE_DESCRIPTIONS[stage]}
             </TooltipContent>
           </Tooltip>
-          <span className={cn('text-[10px] font-bold tabular-nums opacity-50', c.text)}>{leads.length}</span>
+          <span className="text-[10px] font-medium text-muted-foreground/60 tabular-nums">
+            {leads.length}
+          </span>
         </div>
         <Button
-          size="icon" variant="ghost"
-          className={cn('w-5 h-5 shrink-0 opacity-40 hover:opacity-100', c.text)}
+          size="icon"
+          variant="ghost"
+          className="w-5 h-5 text-muted-foreground/40 hover:text-foreground hover:bg-muted"
           onClick={() => onAdd(stage)}
         >
-          <PlusCircle size={13} />
+          <PlusCircle size={12} />
         </Button>
       </div>
 
-      {/* Droppable zone */}
       <Droppable droppableId={stage}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              'flex-1 min-h-[140px] rounded-b-xl border border-t-0 p-2 space-y-2 transition-colors duration-150',
+              'flex-1 min-h-[120px] rounded-xl border p-2 space-y-1.5 transition-colors duration-150',
               snapshot.isDraggingOver
-                ? 'bg-primary/[0.04] border-primary/25'
-                : 'bg-muted/20 border-border/40',
+                ? 'bg-primary/5 border-primary/20'
+                : 'bg-muted/30 border-border/40',
             )}
           >
             {leads.map((lead, index) => (
@@ -103,10 +168,6 @@ function KanbanColumn({ stage, leads, onAdd, onOpen, onEdit, onDelete, onConvert
                     {...dragProvided.draggableProps}
                     {...dragProvided.dragHandleProps}
                     style={dragProvided.draggableProps.style}
-                    className={cn(
-                      'rounded-xl',
-                      dragSnapshot.isDragging && 'shadow-2xl',
-                    )}
                   >
                     <LeadCard
                       lead={lead}
@@ -126,10 +187,10 @@ function KanbanColumn({ stage, leads, onAdd, onOpen, onEdit, onDelete, onConvert
             {leads.length === 0 && !snapshot.isDraggingOver && (
               <button
                 onClick={() => onAdd(stage)}
-                className="w-full h-14 border border-dashed border-border/40 rounded-lg text-muted-foreground/40 text-[11px] hover:border-border/60 hover:text-muted-foreground/60 transition-colors flex items-center justify-center gap-1.5"
+                className="w-full h-12 border border-dashed border-border/30 rounded-lg text-muted-foreground/30 text-[11px] hover:border-border/50 hover:text-muted-foreground/50 transition-colors flex items-center justify-center gap-1.5"
               >
-                <PlusCircle size={12} />
-                Adicionar lead
+                <PlusCircle size={11} />
+                Adicionar
               </button>
             )}
           </div>
@@ -139,21 +200,27 @@ function KanbanColumn({ stage, leads, onAdd, onOpen, onEdit, onDelete, onConvert
   );
 }
 
-// ---------------------------------------------------------------------------
-// Terminal Column
-// ---------------------------------------------------------------------------
-function TerminalColumn({ stage, leads }: { stage: 'won' | 'lost'; leads: Lead[] }) {
-  const c = LEAD_STAGE_COLORS[stage];
+function TerminalColumn({
+  stage,
+  leads,
+}: {
+  stage: 'won' | 'lost';
+  leads: Lead[];
+}) {
+  const colors = LEAD_STAGE_COLORS[stage];
   const Icon = stage === 'won' ? Trophy : XCircle;
 
   return (
-    <div className="flex flex-col w-52 shrink-0">
-      <div className={cn('flex items-center gap-2 px-3 py-2.5 rounded-t-xl border border-b-0 border-t-2', c.bg, c.border)}>
-        <Icon size={12} className={cn(c.text, 'opacity-70')} />
-        <span className={cn('text-[11px] font-semibold uppercase tracking-widest flex-1', c.text)}>
+    <div className="flex flex-col w-48 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2.5 mb-1">
+        <div className={cn('w-1.5 h-1.5 rounded-full', colors.dot)} />
+        <Icon size={11} className={cn(colors.text, 'opacity-60')} />
+        <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wide flex-1">
           {LEAD_STAGE_LABELS[stage]}
         </span>
-        <span className={cn('text-[10px] font-bold opacity-50', c.text)}>{leads.length}</span>
+        <span className="text-[10px] font-medium text-muted-foreground/60 tabular-nums">
+          {leads.length}
+        </span>
       </div>
       <Droppable droppableId={stage}>
         {(provided, snapshot) => (
@@ -161,10 +228,10 @@ function TerminalColumn({ stage, leads }: { stage: 'won' | 'lost'; leads: Lead[]
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              'flex-1 min-h-[80px] rounded-b-xl border border-t-0 p-2 space-y-1.5 transition-colors duration-150',
+              'flex-1 min-h-[80px] rounded-xl border p-2 space-y-1 transition-colors duration-150',
               snapshot.isDraggingOver
-                ? 'bg-primary/[0.04] border-primary/25'
-                : 'bg-muted/20 border-border/40',
+                ? 'bg-primary/5 border-primary/20'
+                : 'bg-muted/20 border-border/30',
             )}
           >
             {leads.map((lead, index) => (
@@ -175,7 +242,11 @@ function TerminalColumn({ stage, leads }: { stage: 'won' | 'lost'; leads: Lead[]
                     {...dragProvided.draggableProps}
                     {...dragProvided.dragHandleProps}
                     style={dragProvided.draggableProps.style}
-                    className={cn('text-xs px-2.5 py-1.5 rounded-lg truncate font-medium border cursor-grab', c.bg, c.border, c.text)}
+                    className={cn(
+                      'text-xs px-2.5 py-1.5 rounded-lg truncate font-medium border cursor-grab',
+                      colors.badge,
+                      'border-border/30',
+                    )}
                   >
                     {lead.name}
                   </div>
@@ -184,7 +255,9 @@ function TerminalColumn({ stage, leads }: { stage: 'won' | 'lost'; leads: Lead[]
             ))}
             {provided.placeholder}
             {leads.length === 0 && !snapshot.isDraggingOver && (
-              <p className="text-[10px] text-muted-foreground/30 text-center py-4 italic">Arraste para cá</p>
+              <p className="text-[10px] text-muted-foreground/25 text-center py-4">
+                Arraste para cá
+              </p>
             )}
           </div>
         )}
@@ -193,30 +266,78 @@ function TerminalColumn({ stage, leads }: { stage: 'won' | 'lost'; leads: Lead[]
   );
 }
 
-// ---------------------------------------------------------------------------
-// Stats
-// ---------------------------------------------------------------------------
-function StatsRow({ leads }: { leads: Lead[] }) {
-  const won = leads.filter((l) => l.status === 'won').length;
-  const lost = leads.filter((l) => l.status === 'lost').length;
-  const active = leads.filter((l) => l.status !== 'won' && l.status !== 'lost').length;
+function PipelineStats({ leads }: { leads: Lead[] }) {
+  const won = leads.filter((lead) => lead.status === 'won').length;
+  const lost = leads.filter((lead) => lead.status === 'lost').length;
+  const active = leads.filter(
+    (lead) => lead.status !== 'won' && lead.status !== 'lost',
+  ).length;
+
   return (
-    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-      <span><span className="font-semibold text-foreground tabular-nums">{leads.length}</span> leads</span>
-      <span className="text-border/60">·</span>
-      <span><span className="font-semibold text-foreground tabular-nums">{active}</span> ativos</span>
-      {won > 0 && <span className="text-emerald-600 font-medium">{won} ganho{won !== 1 ? 's' : ''}</span>}
-      {lost > 0 && <span className="text-rose-500 font-medium">{lost} perdido{lost !== 1 ? 's' : ''}</span>}
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <span>
+        <span className="font-semibold text-foreground tabular-nums">
+          {leads.length}
+        </span>{' '}
+        leads
+      </span>
+      <span className="text-border">·</span>
+      <span>
+        <span className="font-semibold text-foreground tabular-nums">
+          {active}
+        </span>{' '}
+        ativos
+      </span>
+      {won > 0 && (
+        <span className="text-primary font-medium">
+          {won} ganho{won !== 1 ? 's' : ''}
+        </span>
+      )}
+      {lost > 0 && (
+        <span className="text-muted-foreground/60">
+          {lost} perdido{lost !== 1 ? 's' : ''}
+        </span>
+      )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Pipeline Page
-// ---------------------------------------------------------------------------
+function ScrollButton({
+  direction,
+  onClick,
+  visible,
+}: {
+  direction: 'left' | 'right';
+  onClick: () => void;
+  visible: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center',
+        'w-7 h-14 rounded-lg bg-background/80 border border-border/50 backdrop-blur-sm',
+        'text-muted-foreground hover:text-foreground hover:bg-background hover:border-border',
+        'shadow-sm transition-all duration-200',
+        direction === 'left' ? 'left-2' : 'right-2',
+        visible ? 'opacity-100' : 'opacity-0 pointer-events-none',
+      )}
+    >
+      {direction === 'left' ? (
+        <ChevronLeft size={14} />
+      ) : (
+        <ChevronRight size={14} />
+      )}
+    </button>
+  );
+}
+
 export function PipelinePage() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   const { isConnected, onLeadUpdated } = useSocket();
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  useEdgeScroll(boardRef);
 
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -224,6 +345,8 @@ export function PipelinePage() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['leads'],
@@ -233,102 +356,201 @@ export function PipelinePage() {
   const allLeads: Lead[] = useMemo(() => data?.data ?? [], [data]);
 
   useEffect(() => {
-    const unsub = onLeadUpdated(() => void qc.invalidateQueries({ queryKey: ['leads'] }));
-    return unsub;
-  }, [onLeadUpdated, qc]);
+    const unsubscribe = onLeadUpdated(
+      () => void queryClient.invalidateQueries({ queryKey: ['leads'] }),
+    );
+    return unsubscribe;
+  }, [onLeadUpdated, queryClient]);
 
-  const createMut = useMutation({
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+
+    function updateScrollState() {
+      setCanScrollLeft(el!.scrollLeft > 8);
+      setCanScrollRight(el!.scrollLeft < el!.scrollWidth - el!.clientWidth - 8);
+    }
+
+    updateScrollState();
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      observer.disconnect();
+    };
+  }, [isLoading]);
+
+  function scrollBoard(direction: 'left' | 'right') {
+    boardRef.current?.scrollBy({
+      left: direction === 'left' ? -300 : 300,
+      behavior: 'smooth',
+    });
+  }
+
+  const createMutation = useMutation({
     mutationFn: createLead,
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['leads'] }); toast.success('Lead criado!'); setFormOpen(false); },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      toast.success('Lead criado!');
+      setFormOpen(false);
+    },
     onError: () => toast.error('Erro ao criar lead.'),
   });
 
-  const updateMut = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateLeadDto }) => updateLead(id, data),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['leads'] }); toast.success('Lead atualizado!'); setFormOpen(false); setEditingLead(null); },
+  const updateMutation = useMutation({
+    mutationFn: ({ id, dto }: { id: string; dto: CreateLeadDto }) =>
+      updateLead(id, dto),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      toast.success('Lead atualizado!');
+      setFormOpen(false);
+      setEditingLead(null);
+    },
     onError: () => toast.error('Erro ao atualizar lead.'),
   });
 
-  const moveMut = useMutation({
-    mutationFn: ({ id, stage }: { id: string; stage: LeadStage }) => moveLead(id, { status: stage }),
+  const moveMutation = useMutation({
+    mutationFn: ({ id, stage }: { id: string; stage: LeadStage }) =>
+      moveLead(id, { status: stage }),
     onMutate: async ({ id, stage }) => {
-      await qc.cancelQueries({ queryKey: ['leads'] });
-      const prev = qc.getQueryData(['leads']);
-      qc.setQueryData(['leads'], (old: typeof data) => {
+      await queryClient.cancelQueries({ queryKey: ['leads'] });
+      const previous = queryClient.getQueryData(['leads']);
+      queryClient.setQueryData(['leads'], (old: typeof data) => {
         if (!old) return old;
-        return { ...old, data: old.data.map((l: Lead) => l.id === id ? { ...l, status: stage } : l) };
+        return {
+          ...old,
+          data: old.data.map((lead: Lead) =>
+            lead.id === id ? { ...lead, status: stage } : lead,
+          ),
+        };
       });
-      return { prev };
+      return { previous };
     },
-    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['leads'], ctx.prev); toast.error('Erro ao mover lead.'); },
-    onSettled: () => void qc.invalidateQueries({ queryKey: ['leads'] }),
+    onError: (_error, _variables, context) => {
+      if (context?.previous)
+        queryClient.setQueryData(['leads'], context.previous);
+      toast.error('Erro ao mover lead.');
+    },
+    onSettled: () =>
+      void queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
 
-  const deleteMut = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: deleteLead,
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['leads'] }); toast.success('Lead removido.'); },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      toast.success('Lead removido.');
+    },
     onError: () => toast.error('Erro ao remover lead.'),
   });
 
-  const convertMut = useMutation({
+  const convertMutation = useMutation({
     mutationFn: convertLead,
     onSuccess: (contact) => {
-      void qc.invalidateQueries({ queryKey: ['leads'] });
-      void qc.invalidateQueries({ queryKey: ['contacts'] });
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      void queryClient.invalidateQueries({ queryKey: ['contacts'] });
       toast.success(`Convertido: ${contact.name}`);
       setDetailOpen(false);
     },
     onError: () => toast.error('Erro ao converter lead.'),
   });
 
-  const handleDragEnd = ({ source, destination, draggableId }: DropResult) => {
+  function handleDragEnd({ source, destination, draggableId }: DropResult) {
     if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-    const newStage = destination.droppableId as LeadStage;
-    moveMut.mutate({ id: draggableId, stage: newStage });
-  };
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    )
+      return;
+    moveMutation.mutate({
+      id: draggableId,
+      stage: destination.droppableId as LeadStage,
+    });
+  }
 
-  const handleAddInStage = (stage: LeadStage) => { setEditingLead(null); setFormDefaultStage(stage); setFormOpen(true); };
-  const handleEdit = (lead: Lead) => { setEditingLead(lead); setFormOpen(true); };
-  const handleDelete = (lead: Lead) => { if (!confirm(`Remover "${lead.name}"?`)) return; deleteMut.mutate(lead.id); };
-  const handleConvert = (lead: Lead) => { if (!confirm(`Converter "${lead.name}" em contato?`)) return; convertMut.mutate(lead.id); };
-  const handleOpen = (lead: Lead) => { setDetailLead(lead); setDetailOpen(true); };
+  function handleAddInStage(stage: LeadStage) {
+    setEditingLead(null);
+    setFormDefaultStage(stage);
+    setFormOpen(true);
+  }
 
-  const handleFormSubmit = useCallback(async (dto: CreateLeadDto) => {
-    if (editingLead) await updateMut.mutateAsync({ id: editingLead.id, data: dto });
-    else await createMut.mutateAsync(dto);
-  }, [editingLead, updateMut, createMut]);
+  function handleEdit(lead: Lead) {
+    setEditingLead(lead);
+    setFormOpen(true);
+  }
 
-  const q = search.trim().toLowerCase();
-  const filtered = useMemo(() =>
-    q ? allLeads.filter((l) =>
-      l.name.toLowerCase().includes(q) ||
-      (l.company ?? '').toLowerCase().includes(q) ||
-      (l.email ?? '').toLowerCase().includes(q)
-    ) : allLeads,
-  [allLeads, q]);
+  function handleDelete(lead: Lead) {
+    if (!confirm(`Remover "${lead.name}"?`)) return;
+    deleteMutation.mutate(lead.id);
+  }
 
-  const leadsBy = (stage: LeadStage) => filtered.filter((l) => l.status === stage);
+  function handleConvert(lead: Lead) {
+    if (!confirm(`Converter "${lead.name}" em contato?`)) return;
+    convertMutation.mutate(lead.id);
+  }
+
+  function handleOpen(lead: Lead) {
+    setDetailLead(lead);
+    setDetailOpen(true);
+  }
+
+  const handleFormSubmit = useCallback(
+    async (dto: CreateLeadDto) => {
+      if (editingLead) {
+        await updateMutation.mutateAsync({ id: editingLead.id, dto });
+      } else {
+        await createMutation.mutateAsync(dto);
+      }
+    },
+    [editingLead, updateMutation, createMutation],
+  );
+
+  const searchQuery = search.trim().toLowerCase();
+  const filteredLeads = useMemo(
+    () =>
+      searchQuery
+        ? allLeads.filter(
+            (lead) =>
+              lead.name.toLowerCase().includes(searchQuery) ||
+              (lead.company ?? '').toLowerCase().includes(searchQuery) ||
+              (lead.email ?? '').toLowerCase().includes(searchQuery),
+          )
+        : allLeads,
+    [allLeads, searchQuery],
+  );
+
+  function leadsForStage(stage: LeadStage) {
+    return filteredLeads.filter((lead) => lead.status === stage);
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">
-
-      {/* Topbar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0 gap-4">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border/50 shrink-0 gap-4">
         <div>
-          <h1 className="text-sm font-semibold tracking-tight">Pipeline de Prospecção</h1>
-          <div className="text-[11px] text-muted-foreground mt-0.5">
-            {allLeads.length > 0 ? <StatsRow leads={allLeads} /> : 'Sem leads ainda — crie o primeiro'}
+          <h1 className="text-sm font-semibold tracking-tight text-foreground">
+            Pipeline de Prospecção
+          </h1>
+          <div className="mt-0.5">
+            {allLeads.length > 0 ? (
+              <PipelineStats leads={allLeads} />
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                Nenhum lead ainda — crie o primeiro
+              </span>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="cursor-default">
-                {isConnected
-                  ? <Wifi size={12} className="text-emerald-500" />
-                  : <WifiOff size={12} className="text-muted-foreground/30" />}
+              <span className="cursor-default flex items-center">
+                {isConnected ? (
+                  <Wifi size={12} className="text-primary" />
+                ) : (
+                  <WifiOff size={12} className="text-muted-foreground/30" />
+                )}
               </span>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
@@ -337,56 +559,87 @@ export function PipelinePage() {
           </Tooltip>
 
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
+            <Search
+              size={11}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
+            />
             <Input
-              className="pl-7 pr-6 h-8 w-48 text-xs bg-muted/30 border-border/40 focus:bg-background"
-              placeholder="Buscar..."
+              className="pl-7 pr-6 h-8 w-44 text-xs bg-muted/30 border-border/40"
+              placeholder="Buscar lead..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground">
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground"
+              >
                 <X size={11} />
               </button>
             )}
           </div>
 
-          <Button size="sm" className="h-8 text-xs gap-1.5 font-medium" onClick={() => handleAddInStage('new')}>
-            <PlusCircle size={13} />
+          <Button
+            size="sm"
+            className="h-8 text-xs gap-1.5 font-medium"
+            onClick={() => handleAddInStage('new')}
+          >
+            <PlusCircle size={12} />
             Novo Lead
           </Button>
         </div>
       </div>
 
-      {/* Board */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 size={22} className="animate-spin text-muted-foreground/30" />
+          <Loader2
+            size={20}
+            className="animate-spin text-muted-foreground/30"
+          />
         </div>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex-1 overflow-x-auto overflow-y-auto">
-            <div className="flex gap-3 p-5 min-w-max items-start">
+          <div className="flex-1 relative overflow-hidden">
+            <ScrollButton
+              direction="left"
+              onClick={() => scrollBoard('left')}
+              visible={canScrollLeft}
+            />
+            <ScrollButton
+              direction="right"
+              onClick={() => scrollBoard('right')}
+              visible={canScrollRight}
+            />
 
-              {LEAD_FUNNEL_STAGES.map((stage) => (
-                <KanbanColumn
-                  key={stage}
-                  stage={stage}
-                  leads={leadsBy(stage)}
-                  onAdd={handleAddInStage}
-                  onOpen={handleOpen}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onConvert={handleConvert}
-                />
-              ))}
+            <div
+              ref={boardRef}
+              className="h-full overflow-x-auto overflow-y-hidden"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <div className="flex gap-2 p-5 min-w-max items-start">
+                {LEAD_FUNNEL_STAGES.map((stage) => (
+                  <KanbanColumn
+                    key={stage}
+                    stage={stage}
+                    leads={leadsForStage(stage)}
+                    onAdd={handleAddInStage}
+                    onOpen={handleOpen}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onConvert={handleConvert}
+                  />
+                ))}
 
-              <div className="self-stretch w-px bg-border/25 mx-1" />
+                <div className="self-stretch w-px bg-border/20 mx-2" />
 
-              {LEAD_TERMINAL_STAGES.map((stage) => (
-                <TerminalColumn key={stage} stage={stage as 'won' | 'lost'} leads={leadsBy(stage)} />
-              ))}
-
+                {LEAD_TERMINAL_STAGES.map((stage) => (
+                  <TerminalColumn
+                    key={stage}
+                    stage={stage as 'won' | 'lost'}
+                    leads={leadsForStage(stage)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </DragDropContext>
@@ -394,19 +647,28 @@ export function PipelinePage() {
 
       <LeadFormDialog
         open={formOpen}
-        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditingLead(null); }}
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) setEditingLead(null);
+        }}
         lead={editingLead}
         defaultStage={formDefaultStage}
         onSubmit={handleFormSubmit}
-        loading={createMut.isPending || updateMut.isPending}
+        loading={createMutation.isPending || updateMutation.isPending}
       />
 
       <LeadDetailSheet
         lead={detailLead}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onEdit={(l) => { setDetailOpen(false); handleEdit(l); }}
-        onDelete={(l) => { setDetailOpen(false); handleDelete(l); }}
+        onEdit={(lead) => {
+          setDetailOpen(false);
+          handleEdit(lead);
+        }}
+        onDelete={(lead) => {
+          setDetailOpen(false);
+          handleDelete(lead);
+        }}
         onConvert={handleConvert}
       />
     </div>

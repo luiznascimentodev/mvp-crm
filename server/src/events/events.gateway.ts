@@ -35,7 +35,7 @@ interface LeadMovePayload {
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  private server!: Server;
+  private server: Server | null = null;
 
   private readonly logger = new Logger(EventsGateway.name);
 
@@ -92,7 +92,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const user = client.data as AuthUser;
     // Broadcast para todos no tenant (inclusive quem enviou)
-    this.server.to(user.tenantId).emit('lead.updated', {
+    this.server?.to(user.tenantId).emit('lead.updated', {
       leadId: payload.leadId,
       status: payload.status,
       updatedBy: user.userId,
@@ -103,7 +103,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * Emitir evento de lead atualizado para o tenant.
    */
   emitLeadUpdated(tenantId: string, lead: { id: string; status: string }) {
-    this.server.to(tenantId).emit('lead.updated', lead);
+    this.server?.to(tenantId).emit('lead.updated', lead);
   }
 
   /**
@@ -113,13 +113,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     tenantId: string,
     lead: { id: string; name: string; status: string },
   ) {
-    this.server.to(tenantId).emit('lead.created', lead);
+    this.server?.to(tenantId).emit('lead.created', lead);
   }
 
   /**
    * Emitir evento de lead removido para o tenant.
    */
   emitLeadDeleted(tenantId: string, leadId: string) {
-    this.server.to(tenantId).emit('lead.deleted', { leadId });
+    this.server?.to(tenantId).emit('lead.deleted', { leadId });
   }
 }

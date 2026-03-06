@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -59,13 +60,32 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password, tenantId } = loginDto;
+    const { email, password } = loginDto;
 
-    // 1. Buscar usuário por email e tenantId
+    // 1. Resolver tenantId a partir do slug ou do tenantId direto
+    let resolvedTenantId: string;
+
+    if (loginDto.slug) {
+      const slug = loginDto.slug.replace(/^@/, '').toLowerCase().trim();
+      const tenant = await this.prismaService.tenant.findUnique({
+        where: { slug },
+        select: { id: true, isActive: true },
+      });
+      if (!tenant || !tenant.isActive) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      resolvedTenantId = tenant.id;
+    } else if (loginDto.tenantId) {
+      resolvedTenantId = loginDto.tenantId;
+    } else {
+      throw new BadRequestException('Provide workspace slug or tenantId');
+    }
+
+    // 2. Buscar usuário por email e tenantId
     const user = await this.prismaService.user.findUnique({
       where: {
         tenantId_email: {
-          tenantId,
+          tenantId: resolvedTenantId,
           email,
         },
       },

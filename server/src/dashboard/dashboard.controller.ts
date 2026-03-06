@@ -38,4 +38,9 @@ export class DashboardController {
   getLeadsFunnel(@Request() req: { user: AuthUser }) {
     return this.dashboardService.getLeadsFunnel(req.user.tenantId);
   }
+
+  @Get('leads-by-source')
+  getLeadsBySource(@Request() req: { user: AuthUser }) {
+    return this.dashboardService.getLeadsBySource(req.user.tenantId);
+  }
 }

@@ -18,9 +18,9 @@ export const STAGE_LABELS: Record<LeadStatus, string> = {
 };
 
 export const STAGE_COLORS: Record<LeadStatus, string> = {
-  new: '#6366f1',
-  contacted: '#8b5cf6',
-  qualified: '#a78bfa',
+  new: '#6b7280',
+  contacted: '#3b82f6',
+  qualified: '#8b5cf6',
   proposal: '#f59e0b',
   negotiation: '#f97316',
   won: '#10b981',

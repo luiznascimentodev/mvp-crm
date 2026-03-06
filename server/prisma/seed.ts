@@ -4,11 +4,11 @@
  * Popula o banco de desenvolvimento com dados fakes realistas.
  * Execute via: npm run seed --workspace=server
  *
- * IDs e credenciais são FIXOS para facilitar testes manuais.
+ * IDs, slugs e credenciais são FIXOS para facilitar testes manuais.
  *
  * ┌─────────────────────────────────────────────────────────────────┐
  * │  Tenant 1 — "Orbit Demo Pro"                                    │
- * │  ID do Workspace: 10000000-0000-4000-a000-000000000001         │
+ * │  Workspace: @orbit-demo-pro                                     │
  * │  owner@orbitdemo.com   · OWNER  · Senha@123                    │
  * │  admin@orbitdemo.com   · ADMIN  · Senha@123                    │
  * │  member1@orbitdemo.com · MEMBER · Senha@123                    │
@@ -16,7 +16,7 @@
  * │  member3@orbitdemo.com · MEMBER · Senha@123                    │
  * ├─────────────────────────────────────────────────────────────────┤
  * │  Tenant 2 — "Acme Free"                                         │
- * │  ID do Workspace: 20000000-0000-4000-a000-000000000002         │
+ * │  Workspace: @acme-free                                          │
  * │  owner@acmefree.com    · OWNER  · Senha@123                    │
  * │  admin@acmefree.com    · ADMIN  · Senha@123                    │
  * │  member1@acmefree.com  · MEMBER · Senha@123                    │
@@ -212,7 +212,7 @@ async function main() {
   console.log('║          SENHA DE TODOS OS USUÁRIOS: Senha@123            ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log('║  TENANT 1 — Orbit Demo Pro                                ║');
-  console.log('║  ID do Workspace: 10000000-0000-4000-a000-000000000001    ║');
+  console.log('║  Workspace: @orbit-demo-pro                               ║');
   console.log('║   owner@orbitdemo.com   → OWNER                          ║');
   console.log('║   admin@orbitdemo.com   → ADMIN                          ║');
   console.log('║   member1@orbitdemo.com → MEMBER                         ║');
@@ -220,7 +220,7 @@ async function main() {
   console.log('║   member3@orbitdemo.com → MEMBER                         ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log('║  TENANT 2 — Acme Free                                     ║');
-  console.log('║  ID do Workspace: 20000000-0000-4000-a000-000000000002    ║');
+  console.log('║  Workspace: @acme-free                                    ║');
   console.log('║   owner@acmefree.com    → OWNER                          ║');
   console.log('║   admin@acmefree.com    → ADMIN                          ║');
   console.log('║   member1@acmefree.com  → MEMBER                         ║');

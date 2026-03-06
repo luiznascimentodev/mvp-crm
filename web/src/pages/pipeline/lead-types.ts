@@ -1,5 +1,3 @@
-// ─── Estágios do pipeline de prospecção ─────────────────────────────────────
-
 export const LEAD_STAGES = [
   'new',
   'contacted',
@@ -12,7 +10,6 @@ export const LEAD_STAGES = [
 
 export type LeadStage = (typeof LEAD_STAGES)[number];
 
-// Estágios activos no funil (exclui terminais)
 export const LEAD_FUNNEL_STAGES: LeadStage[] = [
   'new',
   'contacted',
@@ -21,7 +18,6 @@ export const LEAD_FUNNEL_STAGES: LeadStage[] = [
   'negotiation',
 ];
 
-// Estágios terminais (finais)
 export const LEAD_TERMINAL_STAGES: LeadStage[] = ['won', 'lost'];
 
 export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
@@ -30,7 +26,7 @@ export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
   qualified: 'Qualificados',
   proposal: 'Proposta',
   negotiation: 'Negociação',
-  won: 'Convertidos ✓',
+  won: 'Convertidos',
   lost: 'Perdidos',
 };
 
@@ -46,60 +42,56 @@ export const LEAD_STAGE_DESCRIPTIONS: Record<LeadStage, string> = {
 
 export const LEAD_STAGE_COLORS: Record<
   LeadStage,
-  { border: string; bg: string; text: string; dot: string; header: string }
+  { accent: string; text: string; dot: string; badge: string }
 > = {
   new: {
-    border: 'border-t-blue-500',
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
-    dot: 'bg-blue-500',
-    header: 'bg-blue-500',
+    accent: 'bg-slate-400',
+    text: 'text-slate-500',
+    dot: 'bg-slate-400',
+    badge:
+      'bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-400',
   },
   contacted: {
-    border: 'border-t-violet-500',
-    bg: 'bg-violet-50',
-    text: 'text-violet-700',
-    dot: 'bg-violet-500',
-    header: 'bg-violet-500',
+    accent: 'bg-blue-400',
+    text: 'text-blue-600',
+    dot: 'bg-blue-400',
+    badge: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
   },
   qualified: {
-    border: 'border-t-amber-500',
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    dot: 'bg-amber-500',
-    header: 'bg-amber-500',
+    accent: 'bg-violet-400',
+    text: 'text-violet-600',
+    dot: 'bg-violet-400',
+    badge:
+      'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-400',
   },
   proposal: {
-    border: 'border-t-orange-500',
-    bg: 'bg-orange-50',
-    text: 'text-orange-700',
-    dot: 'bg-orange-500',
-    header: 'bg-orange-500',
+    accent: 'bg-amber-400',
+    text: 'text-amber-600',
+    dot: 'bg-amber-400',
+    badge:
+      'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400',
   },
   negotiation: {
-    border: 'border-t-rose-500',
-    bg: 'bg-rose-50',
-    text: 'text-rose-700',
-    dot: 'bg-rose-500',
-    header: 'bg-rose-500',
+    accent: 'bg-orange-400',
+    text: 'text-orange-600',
+    dot: 'bg-orange-400',
+    badge:
+      'bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400',
   },
   won: {
-    border: 'border-t-emerald-500',
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
+    accent: 'bg-emerald-500',
+    text: 'text-emerald-600',
     dot: 'bg-emerald-500',
-    header: 'bg-emerald-500',
+    badge:
+      'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400',
   },
   lost: {
-    border: 'border-t-slate-400',
-    bg: 'bg-slate-50',
-    text: 'text-slate-600',
-    dot: 'bg-slate-400',
-    header: 'bg-slate-400',
+    accent: 'bg-rose-400',
+    text: 'text-rose-500',
+    dot: 'bg-rose-400',
+    badge: 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400',
   },
 };
-
-// ── Fontes de leads ──────────────────────────────────────────────────────────
 
 export const LEAD_SOURCES = [
   'website',
@@ -138,8 +130,6 @@ export const LEAD_SOURCE_ICONS: Record<LeadSource, string> = {
   indication: '👤',
   other: '❓',
 };
-
-// ── Interfaces ───────────────────────────────────────────────────────────────
 
 export interface LeadOwner {
   id: string;

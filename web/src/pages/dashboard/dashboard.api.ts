@@ -5,29 +5,53 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// ─── Interfaces ──────────────────────────────────────────────────────────────
+
 export interface DashboardMetrics {
-  totalContacts: number;
   totalLeads: number;
+  activeLeads: number;
   wonLeads: number;
+  lostLeads: number;
   conversionRate: number;
+  lostRate: number;
+  newLeadsThisMonth: number;
+  newLeadsLastMonth: number;
+  newLeadsTrend: number;
+  totalContacts: number;
+  leadsInNegotiation: number;
+  avgDaysToConvert: number | null;
   leadsByStatus: { status: string; count: number }[];
 }
 
 export interface LeadsOverTimeItem {
   date: string;
   count: number;
+  won: number;
+  lost: number;
 }
 
 export interface TopPerformerItem {
   userId: string;
   userName: string;
   wonLeads: number;
+  totalLeads: number;
+  conversionRate: number;
 }
 
 export interface FunnelItem {
   status: string;
   count: number;
+  conversionToNext: number | null;
 }
+
+export interface SourceItem {
+  source: string;
+  total: number;
+  won: number;
+  conversionRate: number;
+}
+
+// ─── Fetch functions ─────────────────────────────────────────────────────────
 
 export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
   const res = await fetch(`${BASE}/dashboard/metrics`, {
@@ -61,4 +85,12 @@ export async function fetchConversionFunnel(): Promise<FunnelItem[]> {
   });
   if (!res.ok) throw new Error('Erro ao buscar funil');
   return res.json() as Promise<FunnelItem[]>;
+}
+
+export async function fetchLeadsBySource(): Promise<SourceItem[]> {
+  const res = await fetch(`${BASE}/dashboard/leads-by-source`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error('Erro ao buscar leads por fonte');
+  return res.json() as Promise<SourceItem[]>;
 }
